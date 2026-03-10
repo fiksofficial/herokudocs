@@ -1,0 +1,2989 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🪐 Heroku Docs — Документация разработчика</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0b14;
+  --bg2: #13101e;
+  --bg3: #1a1628;
+  --surface: #1e1a2e;
+  --surface2: #252038;
+  --border: #2d2845;
+  --border2: #3d3560;
+  --accent: #8b5cf6;
+  --accent2: #a78bfa;
+  --accent3: #c4b5fd;
+  --accent-glow: rgba(139,92,246,0.25);
+  --green: #34d399;
+  --orange: #fb923c;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --cyan: #22d3ee;
+  --text: #e2dff0;
+  --text2: #a09bbf;
+  --text3: #6b6485;
+  --sidebar-w: 280px;
+  --header-h: 56px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: rgba(13,11,20,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; padding: 0 20px;
+  z-index: 200;
+}
+
+.header-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
+  color: var(--accent2); white-space: nowrap; flex-shrink: 0;
+  text-decoration: none;
+}
+.header-logo span { font-size: 22px; }
+
+.header-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+
+/* ── Search ─────────────────────────────────────────────────────────────────── */
+#search-wrap {
+  flex: 1; max-width: 480px; position: relative;
+}
+#search {
+  width: 100%; padding: 8px 16px 8px 40px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+#search::placeholder { color: var(--text3); }
+#search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); pointer-events: none; font-size: 15px;
+}
+#search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden; display: none;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5); z-index: 300; max-height: 400px; overflow-y: auto;
+}
+#search-results.visible { display: block; }
+.sr-item {
+  padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
+  transition: background .15s; display: flex; flex-direction: column; gap: 3px;
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: var(--bg3); }
+.sr-item .sr-title { font-size: 13px; font-weight: 500; color: var(--accent2); }
+.sr-item .sr-ctx { font-size: 12px; color: var(--text3); }
+.sr-item .sr-match { color: var(--text2); font-size: 12px; }
+.sr-item mark { background: transparent; color: var(--accent3); font-weight: 600; }
+.sr-empty { padding: 20px; text-align: center; color: var(--text3); font-size: 13px; }
+
+/* ── Layout ─────────────────────────────────────────────────────────────────── */
+#layout {
+  display: flex; padding-top: var(--header-h); min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────────── */
+#sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 20px 0 40px;
+  transition: transform .3s ease;
+}
+
+.sidebar-section { margin-bottom: 6px; }
+
+.chapter-btn {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; background: none; border: none; cursor: pointer;
+  color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  font-weight: 500; text-align: left; transition: color .2s, background .2s;
+  border-left: 2px solid transparent;
+}
+.chapter-btn:hover { color: var(--text); background: rgba(139,92,246,.08); }
+.chapter-btn.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(139,92,246,.12); }
+.chapter-btn .ch-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--text3); min-width: 22px;
+}
+.chapter-btn .ch-icon { font-size: 15px; }
+.chapter-btn .arrow {
+  margin-left: auto; font-size: 10px; color: var(--text3);
+  transition: transform .2s;
+}
+.chapter-btn.open .arrow { transform: rotate(90deg); }
+
+.subchapters {
+  display: none; padding: 0 0 4px;
+}
+.subchapters.open { display: block; }
+.subchapter-btn {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 7px 20px 7px 46px; background: none; border: none; cursor: pointer;
+  color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 12px;
+  text-align: left; transition: color .2s; border-left: 2px solid transparent;
+}
+.subchapter-btn:hover { color: var(--text2); }
+.subchapter-btn.active { color: var(--accent3); border-left-color: var(--accent); }
+.subchapter-btn .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+.subchapter-btn.active .dot { background: var(--accent); }
+
+/* ── Content ─────────────────────────────────────────────────────────────────── */
+#content {
+  flex: 1; margin-left: var(--sidebar-w);
+  padding: 60px 64px 120px;
+  max-width: calc(100% - var(--sidebar-w));
+}
+
+.chapter { display: none; animation: fadeUp .35s ease; }
+.chapter.visible { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+.chapter-header {
+  display: flex; align-items: flex-start; gap: 24px;
+  margin-bottom: 48px; padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-header .ch-emoji {
+  font-size: 52px; line-height: 1; flex-shrink: 0;
+  filter: drop-shadow(0 0 20px var(--accent-glow));
+}
+.chapter-header h1 {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 38px;
+  line-height: 1.1; color: var(--text);
+}
+.chapter-header .ch-sub {
+  font-size: 15px; color: var(--text2); margin-top: 8px; font-weight: 300;
+}
+
+h2 {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px;
+  color: var(--accent2); margin: 48px 0 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+h2::before { content: ''; display: block; width: 3px; height: 22px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+
+h3 {
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 16px;
+  color: var(--text); margin: 32px 0 12px;
+}
+
+p { font-size: 15px; color: var(--text2); margin-bottom: 16px; line-height: 1.8; }
+p strong { color: var(--text); font-weight: 500; }
+
+/* ── Code ─────────────────────────────────────────────────────────────────── */
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  background: var(--surface); color: var(--accent3);
+  padding: 2px 7px; border-radius: 5px; border: 1px solid var(--border);
+}
+
+/* Code block wrapper — button lives here, NOT inside scrollable pre */
+.code-wrap {
+  position: relative; margin: 20px 0;
+}
+.code-wrap::after {
+  content: attr(data-lang);
+  position: absolute; top: 10px; right: 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text3); text-transform: uppercase; letter-spacing: 1px;
+  pointer-events: none;
+}
+
+pre {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; overflow-x: auto; margin: 0;
+  border-left: 3px solid var(--accent);
+}
+pre code {
+  display: block; padding: 20px 24px; background: none;
+  color: var(--text2); font-size: 13px; line-height: 1.8;
+  border: none; border-radius: 0; white-space: pre;
+}
+
+/* Syntax highlight classes */
+.kw { color: #c792ea; }
+.fn { color: #82aaff; }
+.st { color: #c3e88d; }
+.cm { color: #546e7a; font-style: italic; }
+.num { color: #f78c6c; }
+.dec { color: #ffcb6b; }
+.op { color: #89ddff; }
+.cls { color: #ffcb6b; }
+.self { color: #f07178; }
+
+/* Copy button — anchored to .code-wrap, never scrolls */
+.copy-btn {
+  position: absolute; top: 8px; right: 56px; z-index: 2;
+  padding: 3px 10px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text3); font-size: 11px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all .2s;
+}
+.copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.copy-btn.copied { background: var(--green); color: #000; border-color: var(--green); }
+
+/* ── Tables ─────────────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 20px 0; border-radius: 12px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead tr { background: var(--surface2); }
+thead th {
+  padding: 12px 16px; text-align: left; color: var(--accent2);
+  font-family: 'Syne', sans-serif; font-weight: 600; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .8px; white-space: nowrap;
+}
+tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
+tbody tr:hover { background: rgba(139,92,246,.05); }
+tbody td { padding: 11px 16px; color: var(--text2); vertical-align: top; line-height: 1.6; }
+tbody td:first-child { color: var(--text); font-weight: 500; }
+tbody td code { font-size: 12px; }
+
+/* ── Callouts ─────────────────────────────────────────────────────────────── */
+.callout {
+  padding: 16px 20px; border-radius: 10px; margin: 20px 0;
+  display: flex; gap: 14px; align-items: flex-start;
+  font-size: 14px; line-height: 1.7;
+}
+.callout .c-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.callout.info { background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.3); }
+.callout.warn { background: rgba(251,146,60,.1); border: 1px solid rgba(251,146,60,.3); color: #fbd38d; }
+.callout.danger { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: #fca5a5; }
+.callout.ok { background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.3); color: #6ee7b7; }
+
+/* ── Tag grid ─────────────────────────────────────────────────────────────── */
+.tag-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.tag {
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  font-family: 'JetBrains Mono', monospace; border: 1px solid;
+}
+.tag.purple { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); color: var(--accent3); }
+.tag.green  { background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.35); color: var(--green); }
+.tag.blue   { background: rgba(96,165,250,.12); border-color: rgba(96,165,250,.35); color: var(--blue); }
+.tag.orange { background: rgba(251,146,60,.12); border-color: rgba(251,146,60,.35); color: var(--orange); }
+
+/* ── Hero (home) ─────────────────────────────────────────────────────────── */
+.hero {
+  text-align: center; padding: 40px 20px 60px;
+}
+.hero-glyph {
+  font-size: 80px; display: block; margin-bottom: 24px;
+  filter: drop-shadow(0 0 40px rgba(139,92,246,.6));
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%,100% { filter: drop-shadow(0 0 30px rgba(139,92,246,.5)); }
+  50%      { filter: drop-shadow(0 0 60px rgba(139,92,246,.9)); }
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 52px;
+  background: linear-gradient(135deg, #c4b5fd, #818cf8, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 12px;
+}
+.hero p { font-size: 17px; color: var(--text2); max-width: 520px; margin: 0 auto 32px; }
+.hero-chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.hero-chip {
+  padding: 8px 18px; border-radius: 30px; font-size: 13px; font-weight: 500;
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+  display: flex; align-items: center; gap: 6px;
+}
+.hero-chip span { color: var(--accent2); }
+
+.chapter-cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap: 16px; margin-top: 48px;
+}
+.ch-card {
+  padding: 20px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; cursor: pointer; transition: all .2s;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ch-card:hover {
+  border-color: var(--accent); transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(139,92,246,.2);
+}
+.ch-card .card-icon { font-size: 28px; }
+.ch-card .card-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+.ch-card .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+.ch-card .card-desc { font-size: 12px; color: var(--text3); line-height: 1.5; }
+
+/* ── Mobile toggle ─────────────────────────────────────────────────────────── */
+#menu-toggle {
+  display: none; background: none; border: none; color: var(--text);
+  font-size: 22px; cursor: pointer; flex-shrink: 0;
+}
+#sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 150;
+}
+#sidebar-overlay.visible { display: block; }
+
+/* ── Mobile search toggle button ────────────────────────────────────────────── */
+#search-toggle {
+  display: none;
+  background: none; border: none; color: var(--text2);
+  font-size: 20px; cursor: pointer; flex-shrink: 0;
+  width: 36px; height: 36px; align-items: center; justify-content: center;
+  border-radius: 8px; transition: background .2s, color .2s;
+}
+#search-toggle:hover { background: var(--surface); color: var(--accent2); }
+
+/* Mobile search bar — slides down from header */
+#mobile-search-bar {
+  display: none;
+  position: fixed; top: var(--header-h); left: 0; right: 0;
+  background: rgba(13,11,20,0.97);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  z-index: 199;
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+}
+#mobile-search-bar.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+#mobile-search-wrap {
+  position: relative; width: 100%;
+}
+#mobile-search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); pointer-events: none; font-size: 15px;
+}
+#mobile-search-input {
+  width: 100%; padding: 10px 16px 10px 40px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 15px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+#mobile-search-input::placeholder { color: var(--text3); }
+#mobile-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+#mobile-search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 12px; overflow: hidden; display: none;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6); z-index: 300;
+  max-height: 55vh; overflow-y: auto;
+}
+#mobile-search-results.visible { display: block; }
+
+@media (max-width: 900px) {
+  :root { --sidebar-w: 270px; }
+  #menu-toggle { display: flex; align-items: center; }
+  #sidebar {
+    transform: translateX(-100%); z-index: 160;
+    top: 0; padding-top: calc(var(--header-h) + 20px);
+  }
+  #sidebar.open { transform: translateX(0); }
+  #content { margin-left: 0; max-width: 100%; padding: 40px 24px 80px; }
+
+  /* Hide desktop search, show icon button */
+  #search-wrap { display: none; }
+  #header-sep { display: none; }
+  #search-toggle { display: flex; }
+  #mobile-search-bar { display: block; }
+}
+@media (max-width: 600px) {
+  .chapter-header h1 { font-size: 26px; }
+  .chapter-header .ch-emoji { font-size: 36px; }
+  #content { padding: 32px 16px 80px; }
+}
+
+/* ── Section tabs (sidebar) ─────────────────────────────────────────────────── */
+.section-tabs {
+  display: flex; gap: 6px; padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border); margin-bottom: 6px;
+}
+.section-tab {
+  flex: 1; padding: 7px 4px; border-radius: 8px; border: none; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: .03em; transition: background .18s, color .18s;
+  background: var(--surface); color: var(--text3);
+}
+.section-tab:hover { background: var(--surface2); color: var(--text2); }
+.section-tab.active { background: var(--accent); color: #fff; }
+.section-tab.active-tl { background: var(--cyan); color: #0d0b14; }
+
+/* ── Section header label inside sidebar ────────────────────────────────────── */
+.sidebar-section-label {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px 6px; font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text3);
+  user-select: none;
+}
+.sidebar-section-label::before {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.sidebar-section-label.tl { color: var(--cyan); }
+.sidebar-section-label.tl::after {
+  content: ''; flex: 1; height: 1px; background: color-mix(in srgb, var(--cyan) 30%, transparent);
+}
+
+/* ── Section filter: hide chapters of inactive section ──────────────────────── */
+.sidebar-section.hidden { display: none; }
+
+/* ── Home page: two-column section layout ───────────────────────────────────── */
+.section-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px;
+}
+@media (max-width: 700px) { .section-split { grid-template-columns: 1fr; } }
+
+.section-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+}
+.section-block-head {
+  padding: 18px 20px 14px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.section-block-head .sb-icon { font-size: 26px; }
+.section-block-head .sb-title {
+  font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px;
+}
+.section-block-head .sb-badge {
+  margin-left: auto; font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; letter-spacing: .04em;
+}
+.section-block.heroku .section-block-head { background: linear-gradient(135deg, rgba(139,92,246,.12), transparent); }
+.section-block.heroku .sb-title { color: var(--accent2); }
+.section-block.heroku .sb-badge { background: rgba(139,92,246,.2); color: var(--accent3); }
+.section-block.herokutl .section-block-head { background: linear-gradient(135deg, rgba(34,211,238,.10), transparent); }
+.section-block.herokutl .sb-title { color: var(--cyan); }
+.section-block.herokutl .sb-badge { background: rgba(34,211,238,.15); color: var(--cyan); }
+
+.section-block .ch-card-list { padding: 8px 0; }
+.section-ch-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px; cursor: pointer; transition: background .15s;
+  font-size: 13.5px;
+}
+.section-ch-item:hover { background: var(--surface2); }
+.section-ch-item .sci-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text3); min-width: 22px;
+}
+.section-ch-item .sci-icon { font-size: 15px; }
+.section-ch-item .sci-title { color: var(--text2); }
+.section-ch-item .sci-desc { font-size: 11px; color: var(--text3); display: block; }
+
+/* ── Active section indicator in header ─────────────────────────────────────── */
+#section-indicator {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); transition: all .2s; white-space: nowrap; flex-shrink: 0;
+}
+#section-indicator.tl { background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.3); color: var(--cyan); }
+
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header id="header">
+  <button id="menu-toggle" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+  <a class="header-logo" href="#" onclick="showHome(); return false;">
+    <span>🪐</span> Heroku Docs
+  </a>
+  <div class="header-sep" id="header-sep"></div>
+  <div id="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="search" type="search" placeholder="Поиск по документации..." autocomplete="off">
+    <div id="search-results"></div>
+  </div>
+  <div id="section-indicator">🪐 Heroku</div>
+  <button id="search-toggle" onclick="toggleMobileSearch()" aria-label="Search">🔍</button>
+</header>
+
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ── Mobile search bar ──────────────────────────────────────────────────── -->
+<div id="mobile-search-bar">
+  <div id="mobile-search-wrap">
+    <span id="mobile-search-icon">🔍</span>
+    <input id="mobile-search-input" type="search" placeholder="Поиск по документации..." autocomplete="off">
+    <div id="mobile-search-results"></div>
+  </div>
+</div>
+
+<!-- ── Layout ─────────────────────────────────────────────────────────────── -->
+<div id="layout">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<nav id="sidebar"></nav>
+
+<!-- ── Content ─────────────────────────────────────────────────────────────── -->
+<main id="content"></main>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+const DOCS = [
+  {
+    id: 'home',
+    title: 'Главная',
+    icon: '🏠',
+    noNum: true,
+    sub: [],
+    content: () => {
+      const makeList = (sec) => DOCS.filter(d=>d.section===sec).map(d =>
+        '<div class="section-ch-item" onclick="navigateTo(\'' + d.id + '\',\'' + sec + '\')">' +
+        '<span class="sci-num">' + d.num + '.</span>' +
+        '<span class="sci-icon">' + d.icon + '</span>' +
+        '<span><span class="sci-title">' + d.title + '</span>' +
+        (d.shortDesc ? '<span class="sci-desc">' + d.shortDesc + '</span>' : '') +
+        '</span></div>'
+      ).join('');
+      return `
+      <div class="hero">
+        <span class="hero-glyph">🪐</span>
+        <h1>Heroku Docs</h1>
+        <p>Документация разработчика — userbot на MTProto и библиотека herokutl</p>
+        <div class="hero-chips">
+          <div class="hero-chip">⚡ <span>herokutl 2.0.0</span></div>
+          <div class="hero-chip">🐍 <span>Python 3.10+</span></div>
+          <div class="hero-chip">⚖️ <span>AGPLv3</span></div>
+          <div class="hero-chip">🔗 <span>github.com/coddrago/Heroku</span></div>
+        </div>
+        <div class="section-split">
+          <div class="section-block heroku">
+            <div class="section-block-head">
+              <span class="sb-icon">🪐</span>
+              <div>
+                <div class="sb-title">Heroku</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">Userbot · Система модулей</div>
+              </div>
+              <span class="sb-badge">14 глав</span>
+            </div>
+            <div class="ch-card-list">${makeList('heroku')}</div>
+          </div>
+          <div class="section-block herokutl" style="grid-column:1/-1">
+            <div class="section-block-head">
+              <span class="sb-icon">📡</span>
+              <div>
+                <div class="sb-title">herokutl</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px">MTProto-клиент · Форк Telethon</div>
+              </div>
+              <span class="sb-badge">8 глав</span>
+            </div>
+            <div class="ch-card-list">${makeList('herokutl')}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
+  {
+    id: 'ch1', section:'heroku', num:1, icon:'🏗️', title:'Введение и архитектура',
+    shortDesc:'Структура проекта, жизненный цикл модуля',
+    sub:[{id:'ch1s1',title:'Структура проекта'},{id:'ch1s2',title:'Жизненный цикл модуля'},{id:'ch1s3',title:'Совместимость с Hikka'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🏗️</div>
+        <div><h1>Введение и архитектура</h1><p class="ch-sub">Как устроен Heroku и как работает система модулей</p></div>
+      </div>
+      <p>Heroku — Telegram userbot на Python, работающий по протоколу MTProto через библиотеку <code>herokutl</code> (форк Telethon). Разработчики расширяют функциональность через <strong>модули</strong> — Python-файлы с классом, унаследованным от <code>loader.Module</code>.</p>
+
+      <h2 id="ch1s1">Структура проекта</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Путь</th><th>Назначение</th></tr></thead>
+        <tbody>
+          <tr><td><code>heroku/modules/</code></td><td>Встроенные системные модули</td></tr>
+          <tr><td><code>heroku/loader.py</code></td><td>Ядро загрузки: декораторы, InfiniteLoop, патч импортов</td></tr>
+          <tr><td><code>heroku/types.py</code></td><td>Базовые типы: Module, ModuleConfig, ConfigValue</td></tr>
+          <tr><td><code>heroku/dispatcher.py</code></td><td>Диспетчер команд и событий Telegram</td></tr>
+          <tr><td><code>heroku/validators.py</code></td><td>Валидаторы значений конфигурации</td></tr>
+          <tr><td><code>heroku/utils.py</code></td><td>Утилиты: answer(), get_args_raw(), asset_channel() …</td></tr>
+          <tr><td><code>heroku/inline/</code></td><td>Inline-бот на aiogram: формы, кнопки, запросы</td></tr>
+          <tr><td><code>heroku/database.py</code></td><td>Key-value хранилище (SQLite)</td></tr>
+          <tr><td><code>herokutl/</code></td><td>Форк Telethon — MTProto-клиент Telegram</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch1s2">Жизненный цикл модуля</h2>
+      <p>При загрузке Heroku выполняет шаги в строгом порядке:</p>
+      <ol style="padding-left:24px;color:var(--text2);font-size:15px;line-height:2.2">
+        <li>Загрузка Python-файла через <code>importlib</code></li>
+        <li>Установка pip-зависимостей из комментария <code># requires:</code></li>
+        <li>Обнаружение класса-наследника <code>loader.Module</code></li>
+        <li>Вызов <code>internal_init()</code> — инъекция client, db, inline и т.д.</li>
+        <li>Вызов <code>config_complete()</code> — применение конфига из БД</li>
+        <li>Вызов <code>client_ready()</code> — пользовательская инициализация</li>
+        <li>Регистрация команд, вотчеров, хендлеров в диспетчере</li>
+      </ol>
+      <div class="callout info"><span class="c-icon">💡</span><div><code>client_ready()</code> — правильное место для асинхронной инициализации: создания каналов, запуска задач. Не делайте этого в <code>__init__</code>.</div></div>
+
+      <h2 id="ch1s3">Совместимость с Hikka</h2>
+      <p>Heroku автоматически перенаправляет импорты модулей для Hikka:</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Эти импорты работают прозрачно в Heroku:</span>
+<span class="kw">from</span> <span class="dec">telethon</span>.tl.types <span class="kw">import</span> Message    <span class="cm"># → herokutl.tl.types</span>
+<span class="kw">from</span> <span class="dec">hikka</span> <span class="kw">import</span> loader, utils           <span class="cm"># → heroku.loader, heroku.utils</span>
+<span class="kw">from</span> <span class="dec">hikkatl</span>.tl.types <span class="kw">import</span> Message      <span class="cm"># → herokutl.tl.types</span></code></pre>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div>Совместимость не абсолютна. Если модуль использует Hikka-специфичные API, отсутствующие в Heroku, — проверьте вручную.</div></div>`
+  },
+  {
+    id: 'ch2', section:'heroku', num:2, icon:'📦', title:'Структура модуля',
+    shortDesc:'Шаблон, атрибуты класса, доступные объекты',
+    sub:[{id:'ch2s1',title:'Минимальный модуль'},{id:'ch2s2',title:'Атрибуты класса'},{id:'ch2s3',title:'Доступные объекты'},{id:'ch2s4',title:'Переопределяемые методы'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">📦</div>
+        <div><h1>Структура модуля</h1><p class="ch-sub">Как создать модуль с нуля</p></div>
+      </div>
+
+      <h2 id="ch2s1">Минимальный модуль</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># requires: requests  ← pip-зависимости (опционально)</span>
+
+<span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> loader, utils
+<span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> Message
+
+
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">tds</span>
+<span class="kw">class</span> <span class="cls">MyMod</span>(<span class="dec">loader</span>.<span class="cls">Module</span>):
+    <span class="st">"""Краткое описание модуля"""</span>
+
+    strings <span class="op">=</span> {<span class="st">"name"</span>: <span class="st">"MyModule"</span>}
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+    <span class="kw">async def</span> <span class="fn">hellocmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+        <span class="st">"""- Команда приветствия"""</span>
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Привет, мир!"</span>)</code></pre>
+      <div class="callout info"><span class="c-icon">💡</span><div>Декоратор <code>@loader.tds</code> включает поддержку переводов. Используйте его всегда — он нужен для корректного отображения в <code>.help</code>.</div></div>
+
+      <h2 id="ch2s2">Атрибуты класса</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Атрибут</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>strings</code></td><td>Словарь строк. Ключ <code>"name"</code> — обязателен</td></tr>
+          <tr><td><code>strings_ru</code></td><td>Переводы на русский (или другой язык)</td></tr>
+          <tr><td><code>strings_en</code></td><td>Переводы на английский (резервный язык)</td></tr>
+          <tr><td><code>config</code></td><td>Экземпляр <code>ModuleConfig</code> с пользовательскими настройками</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch2s3">Доступные объекты экземпляра</h2>
+      <p>После вызова <code>internal_init()</code> доступны следующие атрибуты:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Атрибут</th><th>Тип</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>self._client</code></td><td><code>CustomTelegramClient</code></td><td>MTProto-клиент Telegram</td></tr>
+          <tr><td><code>self.db</code></td><td><code>Database</code></td><td>Key-value хранилище</td></tr>
+          <tr><td><code>self.inline</code></td><td><code>InlineManager</code></td><td>Менеджер inline-бота</td></tr>
+          <tr><td><code>self.allmodules</code></td><td><code>Modules</code></td><td>Все загруженные модули</td></tr>
+          <tr><td><code>self.tg_id</code></td><td><code>int</code></td><td>Telegram ID текущего пользователя</td></tr>
+          <tr><td><code>self.lookup(name)</code></td><td><code>Module | None</code></td><td>Найти другой модуль по имени</td></tr>
+          <tr><td><code>self.get_prefix()</code></td><td><code>str</code></td><td>Текущий префикс команд (обычно <code>.</code>)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch2s4">Переопределяемые методы</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Метод</th><th>Когда вызывается</th></tr></thead>
+        <tbody>
+          <tr><td><code>async client_ready()</code></td><td>После подключения клиента, при каждой загрузке</td></tr>
+          <tr><td><code>async on_unload()</code></td><td>Перед выгрузкой / перезагрузкой модуля</td></tr>
+          <tr><td><code>async on_dlmod()</code></td><td>При первичной загрузке через <code>.dlmod</code></td></tr>
+          <tr><td><code>def config_complete()</code></td><td>После заполнения <code>self.config</code> из БД</td></tr>
+        </tbody>
+      </table></div>`
+  },
+  {
+    id: 'ch3', section:'heroku', num:3, icon:'🎨', title:'Декораторы',
+    shortDesc:'@command, @watcher, @loop, @inline_handler и другие',
+    sub:[{id:'ch3s1',title:'@command'},{id:'ch3s2',title:'@watcher'},{id:'ch3s3',title:'@loop'},{id:'ch3s4',title:'@inline_handler'},{id:'ch3s5',title:'@raw_handler'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🎨</div>
+        <div><h1>Декораторы</h1><p class="ch-sub">Как регистрировать команды, события и циклы</p></div>
+      </div>
+
+      <h2 id="ch3s1">@loader.command()</h2>
+      <p>Отмечает метод как команду бота. Имя: <code>hellocmd</code> → <code>.hello</code> (суффикс <code>cmd</code> удаляется).</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+<span class="kw">async def</span> <span class="fn">greetcmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+    <span class="st">"""- Краткая справка в .help"""</span>
+    args <span class="op">=</span> utils.<span class="fn">get_args_raw</span>(message)
+    <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="kw">f</span><span class="st">"Привет, {args or 'мир'}!"</span>)</code></pre>
+
+      <h2 id="ch3s2">@loader.watcher()</h2>
+      <p>Вызывается на <strong>каждое входящее сообщение</strong>. Не блокируйте event loop тяжёлыми операциями.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">watcher</span>()
+<span class="kw">async def</span> <span class="fn">watcher</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+    <span class="kw">if</span> <span class="st">"ключевое слово"</span> <span class="kw">in</span> (message.text <span class="kw">or</span> <span class="st">""</span>).<span class="fn">lower</span>():
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Нашёл!"</span>)</code></pre>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div>Вотчер срабатывает на каждое сообщение во всех чатах. Всегда добавляйте фильтры и избегайте тяжёлых вычислений без <code>await asyncio.sleep(0)</code>.</div></div>
+
+      <h2 id="ch3s3">@loader.loop()</h2>
+      <p>Создаёт бесконечный фоновый цикл на основе <code>asyncio.Task</code>.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">loop</span>(
+    interval<span class="op">=</span><span class="num">60</span>,       <span class="cm"># Пауза между итерациями (секунды)</span>
+    autostart<span class="op">=</span><span class="kw">True</span>,   <span class="cm"># Запуск сразу при загрузке модуля</span>
+    wait_before<span class="op">=</span><span class="kw">False</span>  <span class="cm"># True = ждать перед первой итерацией</span>
+)
+<span class="kw">async def</span> <span class="fn">my_loop</span>(<span class="self">self</span>):
+    <span class="cm"># Ваш код здесь</span>
+    ...
+
+<span class="cm"># Управление:</span>
+<span class="self">self</span>.my_loop.<span class="fn">start</span>()    <span class="cm"># Запустить вручную</span>
+<span class="self">self</span>.my_loop.<span class="fn">stop</span>()     <span class="cm"># Остановить</span>
+<span class="self">self</span>.my_loop.status     <span class="cm"># True если работает</span></code></pre>
+
+      <h2 id="ch3s4">@loader.inline_handler()</h2>
+      <p>Обрабатывает нажатие inline-кнопки. Имя метода должно начинаться с <code>inline__</code>.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
+<span class="kw">async def</span> <span class="fn">inline__mybutton</span>(<span class="self">self</span>, call):
+    <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Кнопка нажата!"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
+    <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Новый текст"</span>)
+
+<span class="cm"># callback_handler — для aiogram-кнопок:</span>
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">callback_handler</span>()
+<span class="kw">async def</span> <span class="fn">on_click</span>(<span class="self">self</span>, call):
+    <span class="kw">await</span> call.<span class="fn">answer</span>()</code></pre>
+
+      <h2 id="ch3s5">@loader.raw_handler()</h2>
+      <p>Перехватывает сырые TL-события. Предотвращает зависшие хендлеры при выгрузке модуля.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> UpdateUserStatus
+
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">raw_handler</span>(UpdateUserStatus)
+<span class="kw">async def</span> <span class="fn">handler</span>(<span class="self">self</span>, update):
+    <span class="cm"># update — сырой TLObject</span>
+    ...</code></pre>`
+  },
+  {
+    id: 'ch4', section:'heroku', num:4, icon:'⚙️', title:'Конфигурация',
+    shortDesc:'ModuleConfig, ConfigValue, все валидаторы',
+    sub:[{id:'ch4s1',title:'Объявление конфига'},{id:'ch4s2',title:'Использование значений'},{id:'ch4s3',title:'Все валидаторы'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">⚙️</div>
+        <div><h1>Конфигурация модуля</h1><p class="ch-sub">Пользовательские настройки через ModuleConfig</p></div>
+      </div>
+      <p>Heroku автоматически предоставляет UI для редактирования настроек модуля. Объявите их через <code>ModuleConfig</code> в <code>__init__</code>.</p>
+
+      <h2 id="ch4s1">Объявление конфига</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
+    <span class="self">self</span>.config <span class="op">=</span> loader.<span class="cls">ModuleConfig</span>(
+        loader.<span class="cls">ConfigValue</span>(
+            <span class="st">"api_key"</span>,           <span class="cm"># Ключ в БД</span>
+            <span class="st">"default_value"</span>,     <span class="cm"># Значение по умолчанию</span>
+            <span class="st">"Описание для пользователя"</span>,
+            validator<span class="op">=</span>loader.validators.<span class="cls">String</span>(),
+            on_change<span class="op">=</span><span class="self">self</span>._on_api_key_change,  <span class="cm"># callback при изменении</span>
+        ),
+        loader.<span class="cls">ConfigValue</span>(
+            <span class="st">"max_count"</span>,
+            <span class="num">10</span>,
+            <span class="kw">lambda</span>: <span class="self">self</span>.strings[<span class="st">"cfg_max_count"</span>],  <span class="cm"># Локализованное описание</span>
+            validator<span class="op">=</span>loader.validators.<span class="cls">Integer</span>(minimum<span class="op">=</span><span class="num">1</span>, maximum<span class="op">=</span><span class="num">100</span>),
+        ),
+    )</code></pre>
+
+      <h2 id="ch4s2">Использование значений</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Читать — через словарный доступ</span>
+value <span class="op">=</span> <span class="self">self</span>.config[<span class="st">"api_key"</span>]
+
+<span class="cm"># Значение всегда актуально — Heroku обновляет словарь при изменении</span>
+<span class="cm"># Callback on_change вызывается синхронно или асинхронно — оба варианта работают</span></code></pre>
+
+      <h2 id="ch4s3">Все валидаторы</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Валидатор</th><th>Параметры</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>Boolean()</code></td><td>—</td><td>True / False</td></tr>
+          <tr><td><code>Integer()</code></td><td><code>minimum</code>, <code>maximum</code></td><td>Целое число</td></tr>
+          <tr><td><code>Float()</code></td><td><code>minimum</code>, <code>maximum</code></td><td>Дробное число</td></tr>
+          <tr><td><code>String()</code></td><td><code>min_len</code>, <code>max_len</code></td><td>Строка</td></tr>
+          <tr><td><code>Choice()</code></td><td><code>possible_values: list</code></td><td>Один из вариантов</td></tr>
+          <tr><td><code>MultiChoice()</code></td><td><code>possible_values: list</code></td><td>Несколько вариантов</td></tr>
+          <tr><td><code>Series()</code></td><td><code>validator</code>, <code>min_len</code>, <code>max_len</code>, <code>fixed_len</code></td><td>Список значений</td></tr>
+          <tr><td><code>RegExp()</code></td><td><code>pattern</code></td><td>Строка по регулярному выражению</td></tr>
+          <tr><td><code>Link()</code></td><td>—</td><td>URL-адрес</td></tr>
+          <tr><td><code>TelegramID()</code></td><td>—</td><td>Telegram ID (целое число)</td></tr>
+          <tr><td><code>Hidden()</code></td><td><code>inner_validator</code></td><td>Скрытое поле (пароли, ключи API)</td></tr>
+          <tr><td><code>Emoji()</code></td><td>—</td><td>Одиночный эмодзи</td></tr>
+          <tr><td><code>Union()</code></td><td><code>*validators</code></td><td>Любой из перечисленных валидаторов</td></tr>
+          <tr><td><code>NoneType()</code></td><td>—</td><td>Разрешает значение <code>None</code></td></tr>
+          <tr><td><code>EntityLike()</code></td><td>—</td><td>Username, ID, ссылка на Telegram-сущность</td></tr>
+        </tbody>
+      </table></div>`
+  },
+  {
+    id: 'ch5', section:'heroku', num:5, icon:'🗄️', title:'База данных',
+    shortDesc:'Key-value хранилище, пространства имён',
+    sub:[{id:'ch5s1',title:'API базы данных'},{id:'ch5s2',title:'Рекомендации'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🗄️</div>
+        <div><h1>База данных</h1><p class="ch-sub">Персистентное key-value хранилище модуля</p></div>
+      </div>
+      <p>Heroku предоставляет SQLite-хранилище, привязанное к клиенту. Данные сохраняются между перезапусками.</p>
+
+      <h2 id="ch5s1">API</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Запись (автоматическая JSON-сериализация)</span>
+<span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"MyModule"</span>, <span class="st">"counter"</span>, <span class="num">42</span>)
+<span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"MyModule"</span>, <span class="st">"data"</span>, {<span class="st">"key"</span>: <span class="st">"value"</span>})
+
+<span class="cm"># Чтение (с дефолтным значением)</span>
+counter <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"MyModule"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
+
+<span class="cm"># Удаление</span>
+<span class="self">self</span>.db.<span class="fn">remove</span>(<span class="st">"MyModule"</span>, <span class="st">"counter"</span>)
+
+<span class="cm"># Проверка наличия</span>
+<span class="kw">if</span> <span class="self">self</span>.db.<span class="fn">contains</span>(<span class="st">"MyModule"</span>, <span class="st">"counter"</span>):
+    ...</code></pre>
+
+      <h2 id="ch5s2">Рекомендации</h2>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div>Первый аргумент — пространство имён. Используйте имя своего модуля. Никогда не пишите в пространство имён чужих модулей — это нарушает изоляцию.</div></div>
+      <div class="callout info"><span class="c-icon">💡</span><div>Для хранения больших объектов (списки, словари) используйте JSON — <code>db.set()</code> сериализует их автоматически.</div></div>`
+  },
+  {
+    id: 'ch6', section:'heroku', num:6, icon:'🛠️', title:'Утилиты (utils)',
+    shortDesc:'answer(), get_args_raw(), get_user() и другие',
+    sub:[{id:'ch6s1',title:'Ответы на сообщения'},{id:'ch6s2',title:'Разбор аргументов'},{id:'ch6s3',title:'Пользователи и сущности'},{id:'ch6s4',title:'Вспомогательные функции'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🛠️</div>
+        <div><h1>Утилиты (utils)</h1><p class="ch-sub">Библиотека вспомогательных функций</p></div>
+      </div>
+
+      <h2 id="ch6s1">Ответы на сообщения</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> utils
+
+<span class="cm"># Отправить или отредактировать сообщение</span>
+<span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Текст ответа"</span>)
+
+<span class="cm"># Ответить с файлом</span>
+<span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Подпись"</span>, file<span class="op">=</span>BytesIO(data))
+
+<span class="cm"># Только файл</span>
+<span class="kw">await</span> utils.<span class="fn">answer_file</span>(message, file<span class="op">=</span>BytesIO(data), caption<span class="op">=</span><span class="st">"Подпись"</span>)</code></pre>
+      <div class="callout info"><span class="c-icon">💡</span><div><code>utils.answer()</code> автоматически определяет: редактировать текущее сообщение или отправить новое — в зависимости от контекста.</div></div>
+
+      <h2 id="ch6s2">Разбор аргументов</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Все аргументы одной строкой</span>
+raw <span class="op">=</span> utils.<span class="fn">get_args_raw</span>(message)          <span class="cm"># "arg1 arg2 arg3"</span>
+
+<span class="cm"># Список аргументов по пробелам</span>
+args <span class="op">=</span> utils.<span class="fn">get_args</span>(message)             <span class="cm"># ["arg1", "arg2", "arg3"]</span>
+
+<span class="cm"># Аргументы как HTML</span>
+html <span class="op">=</span> utils.<span class="fn">get_args_html</span>(message)
+
+<span class="cm"># Разбить по разделителю</span>
+parts <span class="op">=</span> utils.<span class="fn">get_args_split_by</span>(message, <span class="st">","</span>)</code></pre>
+
+      <h2 id="ch6s3">Пользователи и сущности</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Получить пользователя из reply или упоминания</span>
+user <span class="op">=</span> <span class="kw">await</span> utils.<span class="fn">get_user</span>(message)
+
+<span class="cm"># ID чата</span>
+chat_id <span class="op">=</span> utils.<span class="fn">get_chat_id</span>(message)
+
+<span class="cm"># Ссылка на пользователя</span>
+link <span class="op">=</span> utils.<span class="fn">get_link</span>(user)              <span class="cm"># "tg://user?id=123"</span>
+
+<span class="cm"># ID целевого пользователя из аргументов</span>
+target <span class="op">=</span> <span class="kw">await</span> utils.<span class="fn">get_target</span>(message, arg_no<span class="op">=</span><span class="num">0</span>)</code></pre>
+
+      <h2 id="ch6s4">Вспомогательные функции</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>utils.<span class="fn">escape_html</span>(<span class="st">"&lt;b&gt;"</span>)           <span class="cm"># Экранировать HTML</span>
+utils.<span class="fn">chunks</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>], <span class="num">2</span>)          <span class="cm"># [[1,2],[3,4]]</span>
+utils.<span class="fn">rand</span>(<span class="num">16</span>)                       <span class="cm"># Случайная строка из 16 символов</span>
+utils.<span class="fn">formatted_uptime</span>()             <span class="cm"># "2д 3ч 14м"</span>
+
+<span class="cm"># Создать или получить служебный канал</span>
+chat, is_new <span class="op">=</span> <span class="kw">await</span> utils.<span class="fn">asset_channel</span>(
+    <span class="self">self</span>._client,
+    <span class="st">"my-module-logs"</span>,
+    <span class="st">"Описание канала"</span>,
+    invite_bot<span class="op">=</span><span class="kw">True</span>,
+    avatar<span class="op">=</span><span class="st">"https://..."</span>,
+)</code></pre>`
+  },
+  {
+    id: 'ch7', section:'heroku', num:7, icon:'🤖', title:'Inline-бот',
+    shortDesc:'Формы, кнопки, галереи, InlineCall',
+    sub:[{id:'ch7s1',title:'Формы с кнопками'},{id:'ch7s2',title:'Галереи'},{id:'ch7s3',title:'Типы action'},{id:'ch7s4',title:'Методы InlineCall'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🤖</div>
+        <div><h1>Inline-бот</h1><p class="ch-sub">Интерактивные UI-элементы через встроенного бота</p></div>
+      </div>
+      <p>Heroku создаёт встроенного Telegram-бота для интерактивных форм. Доступ через <code>self.inline</code>.</p>
+
+      <h2 id="ch7s1">Формы с кнопками</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">await</span> <span class="self">self</span>.inline.<span class="fn">form</span>(
+    message<span class="op">=</span>message,
+    text<span class="op">=</span><span class="st">"Выберите действие:"</span>,
+    reply_markup<span class="op">=</span>[[
+        {
+            <span class="st">"text"</span>: <span class="st">"✅ Подтвердить"</span>,
+            <span class="st">"callback"</span>: <span class="self">self</span>.confirm_callback,
+            <span class="st">"args"</span>: (<span class="kw">True</span>,),
+        },
+        {
+            <span class="st">"text"</span>: <span class="st">"❌ Отмена"</span>,
+            <span class="st">"action"</span>: <span class="st">"close"</span>,
+        }
+    ]]
+)
+
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
+<span class="kw">async def</span> <span class="fn">confirm_callback</span>(<span class="self">self</span>, call, confirmed: <span class="cls">bool</span>):
+    <span class="kw">if</span> confirmed:
+        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Подтверждено!"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">await</span> call.<span class="fn">delete</span>()</code></pre>
+
+      <h2 id="ch7s2">Галереи</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">await</span> <span class="self">self</span>.inline.<span class="fn">gallery</span>(
+    message<span class="op">=</span>message,
+    next_handler<span class="op">=</span><span class="self">self</span>.photo_generator,  <span class="cm"># async def → str (URL фото)</span>
+    caption<span class="op">=</span><span class="kw">lambda</span>: <span class="st">"Фото из галереи"</span>,
+    preload<span class="op">=</span><span class="num">3</span>,
+)</code></pre>
+
+      <h2 id="ch7s3">Типы action</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>action</th><th>Поведение</th></tr></thead>
+        <tbody>
+          <tr><td><code>"close"</code></td><td>Закрыть форму, удалить сообщение</td></tr>
+          <tr><td><code>"unload"</code></td><td>Убрать обработчик, не удаляя сообщение</td></tr>
+          <tr><td><code>"answer"</code></td><td>Показать pop-up (нужен ключ <code>"text"</code>)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch7s4">Методы InlineCall</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">async def</span> <span class="fn">my_handler</span>(<span class="self">self</span>, call):
+    <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Новый текст"</span>, reply_markup<span class="op">=</span>[...])
+    <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Pop-up"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
+    <span class="kw">await</span> call.<span class="fn">delete</span>()     <span class="cm"># Удалить сообщение формы</span>
+    <span class="kw">await</span> call.<span class="fn">unload</span>()    <span class="cm"># Убрать хендлер, оставить сообщение</span></code></pre>`
+  },
+  {
+    id: 'ch8', section:'heroku', num:8, icon:'🔐', title:'Безопасность',
+    shortDesc:'Уровни прав доступа к командам',
+    sub:[{id:'ch8s1',title:'Уровни прав'},{id:'ch8s2',title:'Применение прав'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🔐</div>
+        <div><h1>Безопасность и права</h1><p class="ch-sub">Разграничение доступа к командам модуля</p></div>
+      </div>
+
+      <h2 id="ch8s1">Уровни прав</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Константа</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>loader.owner</code></td><td>Только владелец аккаунта (по умолчанию)</td></tr>
+          <tr><td><code>loader.group_owner</code></td><td>Создатель группы / канала</td></tr>
+          <tr><td><code>loader.group_admin</code></td><td>Любой администратор</td></tr>
+          <tr><td><code>loader.group_admin_add_admins</code></td><td>Администратор: добавление администраторов</td></tr>
+          <tr><td><code>loader.group_admin_ban_users</code></td><td>Администратор: бан пользователей</td></tr>
+          <tr><td><code>loader.group_admin_delete_messages</code></td><td>Администратор: удаление сообщений</td></tr>
+          <tr><td><code>loader.group_admin_pin_messages</code></td><td>Администратор: закрепление сообщений</td></tr>
+          <tr><td><code>loader.group_admin_invite_users</code></td><td>Администратор: приглашение пользователей</td></tr>
+          <tr><td><code>loader.group_member</code></td><td>Любой участник группы</td></tr>
+          <tr><td><code>loader.pm</code></td><td>Только в личных сообщениях</td></tr>
+          <tr><td><code>loader.unrestricted</code></td><td>Все пользователи без ограничений</td></tr>
+          <tr><td><code>loader.inline_everyone</code></td><td>Все в inline-режиме</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch8s2">Применение прав</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+<span class="kw">async def</span> <span class="fn">admincmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+    <span class="cm"># Проверка прав вручную</span>
+    <span class="kw">if not await</span> <span class="self">self</span>.allmodules.<span class="fn">check_security</span>(message, loader.group_admin):
+        <span class="kw">return await</span> utils.<span class="fn">answer</span>(message, <span class="st">"❌ Недостаточно прав!"</span>)
+    <span class="cm"># Код доступен только администраторам</span>
+    ...</code></pre>`
+  },
+  {
+    id: 'ch9', section:'heroku', num:9, icon:'🌐', title:'Строки и переводы',
+    shortDesc:'Мультиязычность через strings и strings_en',
+    sub:[{id:'ch9s1',title:'Объявление строк'},{id:'ch9s2',title:'Использование строк'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🌐</div>
+        <div><h1>Строки и переводы</h1><p class="ch-sub">Мультиязычность для вашего модуля</p></div>
+      </div>
+
+      <h2 id="ch9s1">Объявление строк</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">tds</span>
+<span class="kw">class</span> <span class="cls">MyMod</span>(<span class="dec">loader</span>.<span class="cls">Module</span>):
+    strings <span class="op">=</span> {
+        <span class="st">"name"</span>: <span class="st">"MyModule"</span>,                <span class="cm"># Обязателен</span>
+        <span class="st">"greeting"</span>: <span class="st">"Привет, &lt;b&gt;{}&lt;/b&gt;!"</span>,
+        <span class="st">"error"</span>: <span class="st">"❌ Ошибка: {}"</span>,
+        <span class="st">"_cmd_doc_hello"</span>: <span class="st">"- Команда приветствия"</span>,
+    }
+
+    strings_en <span class="op">=</span> {                          <span class="cm"># Английский — резервный</span>
+        <span class="st">"greeting"</span>: <span class="st">"Hello, &lt;b&gt;{}&lt;/b&gt;!"</span>,
+        <span class="st">"error"</span>: <span class="st">"❌ Error: {}"</span>,
+        <span class="st">"_cmd_doc_hello"</span>: <span class="st">"- Greeting command"</span>,
+    }</code></pre>
+
+      <h2 id="ch9s2">Использование строк</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># С локализацией — через self.strings()</span>
+<span class="kw">async def</span> <span class="fn">hellocmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+    name <span class="op">=</span> (<span class="kw">await</span> <span class="self">self</span>._client.<span class="fn">get_me</span>()).first_name
+    <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"greeting"</span>).<span class="fn">format</span>(name))
+
+<span class="cm"># Прямой доступ к словарю (без локализации)</span>
+raw <span class="op">=</span> <span class="self">self</span>.strings[<span class="st">"greeting"</span>]</code></pre>
+      <div class="callout info"><span class="c-icon">💡</span><div>Heroku автоматически выбирает языковой словарь по настройкам пользователя. Всегда определяйте <code>strings</code> как базовый, <code>strings_en</code> — как резервный.</div></div>`
+  },
+  {
+    id: 'ch10', section:'heroku', num:10, icon:'📦', title:'Pip-зависимости',
+    shortDesc:'Автоустановка библиотек через # requires:',
+    sub:[{id:'ch10s1',title:'Синтаксис requires'},{id:'ch10s2',title:'Ограничения'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">📦</div>
+        <div><h1>Pip-зависимости</h1><p class="ch-sub">Автоустановка внешних библиотек</p></div>
+      </div>
+      <p>Если модуль использует внешние библиотеки, Heroku установит их автоматически.</p>
+
+      <h2 id="ch10s1">Синтаксис requires</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># requires: requests pillow aiohttp==3.9.1</span>
+<span class="cm"># requires: https://github.com/user/repo/archive/main.zip</span>
+
+<span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> loader, utils</code></pre>
+      <p>Строка <code># requires:</code> должна быть в первых строках файла. Поддерживаются: имена пакетов, точные версии через <code>==</code>, URL на GitHub.</p>
+
+      <h2 id="ch10s2">Ограничения</h2>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div>Не включайте пакеты, уже входящие в <code>herokutl</code>: <code>aiohttp</code>, <code>cryptography</code>, <code>pyaes</code> и другие. Это вызовет конфликты версий.</div></div>
+      <div class="callout info"><span class="c-icon">💡</span><div>Пакеты устанавливаются командой <code>pip install --user</code>. В Docker-окружении — в системный Python.</div></div>`
+  },
+  {
+    id: 'ch11', section:'heroku', num:11, icon:'📋', title:'Полный пример',
+    shortDesc:'Модуль со всеми основными паттернами',
+    sub:[{id:'ch11s1',title:'Исходный код'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">📋</div>
+        <div><h1>Полный пример</h1><p class="ch-sub">Модуль с командами, конфигом, inline-формой и циклом</p></div>
+      </div>
+      <div class="callout ok"><span class="c-icon">✅</span><div>Этот пример можно скопировать и использовать как шаблон для нового модуля.</div></div>
+
+      <h2 id="ch11s1">Исходный код</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># requires: aiohttp</span>
+
+<span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> loader, utils
+<span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> Message
+<span class="kw">import</span> aiohttp
+
+
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">tds</span>
+<span class="kw">class</span> <span class="cls">ExampleMod</span>(<span class="dec">loader</span>.<span class="cls">Module</span>):
+    <span class="st">"""Пример модуля с основными паттернами"""</span>
+
+    strings <span class="op">=</span> {
+        <span class="st">"name"</span>: <span class="st">"Example"</span>,
+        <span class="st">"no_args"</span>: <span class="st">"❌ Укажите аргументы"</span>,
+        <span class="st">"result"</span>: <span class="st">"✅ Результат: &lt;code&gt;{}&lt;/code&gt;"</span>,
+        <span class="st">"counter"</span>: <span class="st">"🔢 Счётчик: &lt;b&gt;{}&lt;/b&gt;"</span>,
+    }
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
+        <span class="self">self</span>.config <span class="op">=</span> loader.<span class="cls">ModuleConfig</span>(
+            loader.<span class="cls">ConfigValue</span>(
+                <span class="st">"prefix_text"</span>,
+                <span class="st">"Result"</span>,
+                <span class="st">"Текст перед результатом"</span>,
+                validator<span class="op">=</span>loader.validators.<span class="cls">String</span>(),
+            ),
+            loader.<span class="cls">ConfigValue</span>(
+                <span class="st">"auto_count"</span>,
+                <span class="kw">True</span>,
+                <span class="st">"Считать все сообщения"</span>,
+                validator<span class="op">=</span>loader.validators.<span class="cls">Boolean</span>(),
+            ),
+        )
+
+    <span class="kw">async def</span> <span class="fn">client_ready</span>(<span class="self">self</span>):
+        <span class="kw">if not</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>):
+            <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+    <span class="kw">async def</span> <span class="fn">echocmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+        <span class="st">"""- Повторить аргументы"""</span>
+        args <span class="op">=</span> utils.<span class="fn">get_args_raw</span>(message)
+        <span class="kw">if not</span> args:
+            <span class="kw">return await</span> utils.<span class="fn">answer</span>(message, <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"no_args"</span>))
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(
+            message,
+            <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"result"</span>).<span class="fn">format</span>(
+                <span class="kw">f</span><span class="st">"{self.config['prefix_text']}: {args}"</span>
+            )
+        )
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+    <span class="kw">async def</span> <span class="fn">countercmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+        <span class="st">"""- Показать счётчик"""</span>
+        count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(
+            message,
+            <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(count),
+            reply_markup<span class="op">=</span>[[
+                {<span class="st">"text"</span>: <span class="st">"➕ +1"</span>, <span class="st">"callback"</span>: <span class="self">self</span>._inc},
+                {<span class="st">"text"</span>: <span class="st">"🔄 Сброс"</span>, <span class="st">"callback"</span>: <span class="self">self</span>._reset},
+            ]]
+        )
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
+    <span class="kw">async def</span> <span class="fn">_inc</span>(<span class="self">self</span>, call):
+        count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>) <span class="op">+</span> <span class="num">1</span>
+        <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, count)
+        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(count))
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
+    <span class="kw">async def</span> <span class="fn">_reset</span>(<span class="self">self</span>, call):
+        <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
+        <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Счётчик сброшен!"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
+        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(<span class="num">0</span>))
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">watcher</span>()
+    <span class="kw">async def</span> <span class="fn">watcher</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+        <span class="kw">if</span> <span class="self">self</span>.config[<span class="st">"auto_count"</span>] <span class="kw">and</span> <span class="fn">getattr</span>(message, <span class="st">"out"</span>, <span class="kw">False</span>):
+            count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>) <span class="op">+</span> <span class="num">1</span>
+            <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, count)
+
+    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">loop</span>(interval<span class="op">=</span><span class="num">3600</span>, autostart<span class="op">=</span><span class="kw">True</span>)
+    <span class="kw">async def</span> <span class="fn">hourly_task</span>(<span class="self">self</span>):
+        <span class="cm"># Выполняется каждый час</span>
+        ...</code></pre>`
+  },
+  {
+    id: 'ch12', section:'heroku', num:12, icon:'💡', title:'Паттерны',
+    shortDesc:'Лучшие практики, частые ошибки, советы',
+    sub:[{id:'ch12s1',title:'Взаимодействие модулей'},{id:'ch12s2',title:'Файлы и медиа'},{id:'ch12s3',title:'Обработка ошибок'},{id:'ch12s4',title:'Чего НЕ делать'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">💡</div>
+        <div><h1>Паттерны и рекомендации</h1><p class="ch-sub">Лучшие практики разработки модулей</p></div>
+      </div>
+
+      <h2 id="ch12s1">Взаимодействие между модулями</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Получить другой модуль по имени</span>
+other <span class="op">=</span> <span class="self">self</span>.<span class="fn">lookup</span>(<span class="st">"OtherModule"</span>)
+<span class="kw">if</span> other:
+    result <span class="op">=</span> <span class="kw">await</span> other.<span class="fn">some_method</span>()</code></pre>
+
+      <h2 id="ch12s2">Файлы и медиа</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">from</span> <span class="dec">io</span> <span class="kw">import</span> BytesIO
+
+data <span class="op">=</span> <span class="kw">b</span><span class="st">"binarydata"</span>
+buf <span class="op">=</span> <span class="cls">BytesIO</span>(data)
+buf.name <span class="op">=</span> <span class="st">"output.bin"</span>   <span class="cm"># Имя файла для Telegram</span>
+
+<span class="kw">await</span> utils.<span class="fn">answer</span>(message, buf, caption<span class="op">=</span><span class="st">"Файл"</span>)</code></pre>
+
+      <h2 id="ch12s3">Обработка ошибок</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">import</span> logging
+logger <span class="op">=</span> logging.<span class="fn">getLogger</span>(__name__)
+
+<span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
+<span class="kw">async def</span> <span class="fn">riskcmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
+    <span class="kw">try</span>:
+        result <span class="op">=</span> <span class="kw">await</span> <span class="fn">some_async_operation</span>()
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="fn">str</span>(result))
+    <span class="kw">except</span> <span class="cls">Exception</span> <span class="kw">as</span> e:
+        logger.<span class="fn">exception</span>(<span class="st">"Ошибка в riskcmd"</span>)
+        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="kw">f</span><span class="st">"❌ {type(e).__name__}: {e}"</span>)</code></pre>
+
+      <h2 id="ch12s4">Чего НЕ делать</h2>
+      <div class="callout danger"><span class="c-icon">🚫</span><div><strong>Не используйте <code>time.sleep()</code></strong> — только <code>await asyncio.sleep()</code>, иначе заморозите весь event loop.</div></div>
+      <div class="callout danger"><span class="c-icon">🚫</span><div><strong>Не делайте тяжёлые операции в <code>watcher</code></strong> без фильтров — вотчер срабатывает на каждое сообщение.</div></div>
+      <div class="callout danger"><span class="c-icon">🚫</span><div><strong>Не создавайте asyncio.Task вручную</strong> — используйте <code>@loader.loop</code> для корректной отмены при выгрузке.</div></div>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div><strong>Не пишите в БД чужих модулей</strong> — используйте только своё пространство имён.</div></div>
+      <div class="callout warn"><span class="c-icon">⚠️</span><div><strong>Не храните состояние в глобальных переменных</strong> — только в <code>self.db</code> или атрибутах экземпляра.</div></div>`
+  },
+  {
+    id: 'ch13', section:'heroku', num:13, icon:'🔍', title:'Отладка',
+    shortDesc:'Команды, debug_modules, live-reload, логи',
+    sub:[{id:'ch13s1',title:'Встроенные команды'},{id:'ch13s2',title:'Режим debug_modules'},{id:'ch13s3',title:'Логирование'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🔍</div>
+        <div><h1>Отладка</h1><p class="ch-sub">Инструменты для разработки и диагностики</p></div>
+      </div>
+
+      <h2 id="ch13s1">Встроенные команды</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Команда</th><th>Действие</th></tr></thead>
+        <tbody>
+          <tr><td><code>.logs [уровень]</code></td><td>Получить логи: DEBUG / INFO / WARNING / ERROR</td></tr>
+          <tr><td><code>.debugmod &lt;Имя&gt;</code></td><td>Включить live-reload модуля из <code>debug_modules/</code></td></tr>
+          <tr><td><code>.ping</code></td><td>Задержка и uptime бота</td></tr>
+          <tr><td><code>.e &lt;код&gt;</code></td><td>Выполнить Python-код (eval)</td></tr>
+          <tr><td><code>.reload &lt;Имя&gt;</code></td><td>Перезагрузить модуль</td></tr>
+          <tr><td><code>.clearlogs</code></td><td>Очистить буфер логов</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch13s2">Режим debug_modules</h2>
+      <p>При включении <code>.debugmod MyMod</code> Heroku следит за файлом <code>debug_modules/MyMod.py</code> и перезагружает его при каждом изменении.</p>
+      <pre data-lang="bash"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Включить live-reload для модуля:</span>
+.debugmod ExampleMod
+
+<span class="cm"># Теперь редактируйте файл:</span>
+debug_modules/ExampleMod.py
+
+<span class="cm"># Heroku автоматически перезагрузит его при сохранении</span>
+<span class="cm"># Выключить: повторно .debugmod ExampleMod</span></code></pre>
+      <div class="callout ok"><span class="c-icon">✅</span><div>Live-reload позволяет разрабатывать модуль без ручной перезагрузки бота. Ошибки появятся в логах в реальном времени.</div></div>
+
+      <h2 id="ch13s3">Логирование</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">import</span> logging
+logger <span class="op">=</span> logging.<span class="fn">getLogger</span>(__name__)
+
+logger.<span class="fn">debug</span>(<span class="st">"Отладочная информация"</span>)
+logger.<span class="fn">info</span>(<span class="st">"Информационное сообщение"</span>)
+logger.<span class="fn">warning</span>(<span class="st">"Предупреждение"</span>)
+logger.<span class="fn">error</span>(<span class="st">"Ошибка"</span>)
+logger.<span class="fn">exception</span>(<span class="st">"Ошибка с traceback"</span>)  <span class="cm"># Автоматически стек вызовов</span></code></pre>
+      <p>Все логи попадают в Telegram-канал <code>heroku-logs</code> согласно уровню, настроенному в модуле Tester.</p>`
+  },
+  {
+    id: 'ch14', section:'heroku', num:14, icon:'📚', title:'Справочник API',
+    shortDesc:'Таблицы всех функций loader.* и utils.*',
+    sub:[{id:'ch14s1',title:'loader.*'},{id:'ch14s2',title:'utils.*'}],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">📚</div>
+        <div><h1>Справочник API</h1><p class="ch-sub">Полные таблицы loader.* и utils.*</p></div>
+      </div>
+
+      <h2 id="ch14s1">loader.*</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Имя</th><th>Назначение</th></tr></thead>
+        <tbody>
+          <tr><td><code>loader.Module</code></td><td>Базовый класс модуля</td></tr>
+          <tr><td><code>loader.ModuleConfig</code></td><td>Конфигурация модуля</td></tr>
+          <tr><td><code>loader.ConfigValue</code></td><td>Одно значение конфигурации</td></tr>
+          <tr><td><code>loader.tds</code></td><td>Декоратор класса для переводов (обязателен)</td></tr>
+          <tr><td><code>loader.command()</code></td><td>Декоратор команды</td></tr>
+          <tr><td><code>loader.watcher()</code></td><td>Декоратор вотчера</td></tr>
+          <tr><td><code>loader.loop(interval, autostart, wait_before)</code></td><td>Декоратор фонового цикла</td></tr>
+          <tr><td><code>loader.inline_handler()</code></td><td>Декоратор inline-обработчика</td></tr>
+          <tr><td><code>loader.callback_handler()</code></td><td>Декоратор callback-обработчика</td></tr>
+          <tr><td><code>loader.raw_handler(*types)</code></td><td>Декоратор raw TL-обработчика</td></tr>
+          <tr><td><code>loader.validators</code></td><td>Модуль с валидаторами</td></tr>
+          <tr><td><code>loader.owner</code></td><td>Уровень безопасности: только владелец</td></tr>
+          <tr><td><code>loader.group_admin</code></td><td>Уровень: администратор группы</td></tr>
+          <tr><td><code>loader.unrestricted</code></td><td>Уровень: все пользователи</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch14s2">utils.*</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Функция</th><th>Назначение</th></tr></thead>
+        <tbody>
+          <tr><td><code>answer(msg, text, **kw)</code></td><td>Ответить / редактировать сообщение</td></tr>
+          <tr><td><code>answer_file(msg, file, caption)</code></td><td>Отправить файл</td></tr>
+          <tr><td><code>get_args_raw(msg)</code></td><td>Аргументы одной строкой</td></tr>
+          <tr><td><code>get_args(msg)</code></td><td>Аргументы списком</td></tr>
+          <tr><td><code>get_args_html(msg)</code></td><td>Аргументы с HTML-разметкой</td></tr>
+          <tr><td><code>get_args_split_by(msg, sep)</code></td><td>Аргументы, разбитые по разделителю</td></tr>
+          <tr><td><code>get_user(msg)</code></td><td>Пользователь из reply или упоминания</td></tr>
+          <tr><td><code>get_chat_id(msg)</code></td><td>ID текущего чата</td></tr>
+          <tr><td><code>get_target(msg, arg_no)</code></td><td>ID целевого пользователя из аргументов</td></tr>
+          <tr><td><code>get_link(entity)</code></td><td>Ссылка tg:// на пользователя / канал</td></tr>
+          <tr><td><code>escape_html(text)</code></td><td>Экранировать HTML-символы</td></tr>
+          <tr><td><code>chunks(list, n)</code></td><td>Разбить список на чанки по n элементов</td></tr>
+          <tr><td><code>rand(size)</code></td><td>Случайная строка заданной длины</td></tr>
+          <tr><td><code>formatted_uptime()</code></td><td>Uptime в читаемом виде (2д 3ч 14м)</td></tr>
+          <tr><td><code>asset_channel(client, id, desc, ...)</code></td><td>Создать или получить служебный канал</td></tr>
+          <tr><td><code>get_git_hash()</code></td><td>Текущий git-коммит бота</td></tr>
+          <tr><td><code>get_named_platform()</code></td><td>Название платформы (Docker, VDS и т.д.)</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">herokutl</span>
+        <span class="tag purple">Python 3.10+</span>
+        <span class="tag green">AGPLv3</span>
+        <span class="tag blue">MTProto</span>
+        <span class="tag orange">github.com/coddrago/Heroku</span>
+      </div>`
+  },
+  {
+    id: 'ch15', section:'herokutl', num:15, icon:'🏛️', title:'Архитектура herokutl',
+    shortDesc:'Структура пакета, MRO, sync/async, TotalList, RequestIter',
+    sub:[
+      {id:'ch15s1',title:'Что такое herokutl'},
+      {id:'ch15s2',title:'Структура пакета'},
+      {id:'ch15s3',title:'MRO — 13 миксинов'},
+      {id:'ch15s4',title:'Sync/Async дуальность'},
+      {id:'ch15s5',title:'TotalList и RequestIter'},
+      {id:'ch15s6',title:'Типизация (hints.py)'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🏛️</div>
+        <div><h1>Архитектура herokutl</h1><p class="ch-sub">Как устроена библиотека изнутри</p></div>
+      </div>
+
+      <h2 id="ch15s1">Что такое herokutl</h2>
+      <p><code>herokutl</code> — форк Telethon 2.0.0. Версия: <strong>2.0.0</strong>. Установка: <code>pip install heroku-tl-new</code>. Это полноценный asyncio MTProto-клиент для Telegram, написанный на чистом Python без C-зависимостей. Внутри Heroku-userbot клиент уже поднят и живёт в <code>self._client</code> — не надо его запускать вручную.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl import TelegramClient, events, utils, errors
+from herokutl.tl import types, functions
+from herokutl.tl.custom import Button, Message</code></pre>
+
+      <h2 id="ch15s2">Структура пакета</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Модуль</th><th>Что внутри</th></tr></thead>
+        <tbody>
+          <tr><td><code>herokutl.client/</code></td><td>13 mixin-классов + TelegramClient: <code>telegrambaseclient</code>, <code>auth</code>, <code>messages</code>, <code>uploads</code>, <code>downloads</code>, <code>chats</code>, <code>users</code>, <code>dialogs</code>, <code>updates</code>, <code>bots</code>, <code>buttons</code>, <code>account</code>, <code>messageparse</code>, <code>payments</code></td></tr>
+          <tr><td><code>herokutl.events/</code></td><td><code>NewMessage</code>, <code>MessageEdited</code>, <code>MessageDeleted</code>, <code>MessageRead</code>, <code>ChatAction</code>, <code>UserUpdate</code>, <code>CallbackQuery</code>, <code>InlineQuery</code>, <code>Album</code>, <code>Raw</code> + <code>StopPropagation</code></td></tr>
+          <tr><td><code>herokutl.tl.types</code></td><td>Автосгенерированные TL-типы (Layer 185+)</td></tr>
+          <tr><td><code>herokutl.tl.functions</code></td><td>Автосгенерированные RPC-функции</td></tr>
+          <tr><td><code>herokutl.tl.custom/</code></td><td><code>Message</code>, <code>Button</code>, <code>Dialog</code>, <code>Draft</code>, <code>Forward</code>, <code>Conversation</code>, <code>InlineBuilder</code>, <code>InlineResult</code>, <code>InlineResults</code>, <code>MessageButton</code>, <code>File</code>, <code>AdminLogEvent</code>, <code>ParticipantPermissions</code>, <code>StarGift</code>, <code>ChatGetter</code>, <code>SenderGetter</code></td></tr>
+          <tr><td><code>herokutl.errors</code></td><td>Иерархия RPCError + специфичные ошибки</td></tr>
+          <tr><td><code>herokutl.sessions/</code></td><td><code>SQLiteSession</code>, <code>MemorySession</code>, <code>StringSession</code></td></tr>
+          <tr><td><code>herokutl.network/</code></td><td><code>MTProtoSender</code>, 7 типов соединений</td></tr>
+          <tr><td><code>herokutl.crypto/</code></td><td>AES, RSA, AuthKey, factorization (DH)</td></tr>
+          <tr><td><code>herokutl.utils</code></td><td>~50 публичных вспомогательных функций</td></tr>
+          <tr><td><code>herokutl._updates/</code></td><td><code>MessageBox</code> — движок получения апдейтов</td></tr>
+          <tr><td><code>herokutl.helpers</code></td><td>TotalList, _FileStream, surrogate utils, retry_range</td></tr>
+          <tr><td><code>herokutl.hints</code></td><td>Типовые алиасы: EntityLike, FileLike, DateLike…</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch15s3">MRO — 13 миксинов</h2>
+      <p><code>TelegramClient</code> собирается через множественное наследование Python. Порядок MRO определяет, чей метод победит при совпадении имён:</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>class TelegramClient(
+    AccountMethods,      # takeout, end_takeout
+    AuthMethods,         # start, sign_in, log_out, edit_2fa, qr_login
+    DownloadMethods,     # download_media, download_profile_photo, iter_download
+    DialogMethods,       # iter_dialogs, get_dialogs, edit_folder, delete_dialog, iter_drafts
+    ChatMethods,         # edit_admin, edit_permissions, kick_participant, iter_participants, iter_admin_log, get_stats, get_permissions, action
+    BotMethods,          # inline_query
+    MessageMethods,      # send_message, iter_messages, edit_message, delete_messages, forward_messages, pin_message, send_read_acknowledge, send_reaction, translate
+    UploadMethods,       # send_file, upload_file
+    ButtonMethods,       # build_reply_markup
+    GiftMethods,         # get_saved_gifts, upgrade_gift
+    UpdateMethods,       # on, add_event_handler, remove_event_handler, catch_up, run_until_disconnected
+    MessageParseMethods, # parse_mode (property)
+    UserMethods,         # get_me, is_bot, get_entity, get_input_entity, get_peer_id, get_profile_photos
+    TelegramBaseClient   # connect, disconnect, is_connected, session, loop, flood_sleep_threshold
+):</code></pre>
+
+      <h2 id="ch15s4">Sync/Async дуальность</h2>
+      <p>Модуль <code>herokutl.sync</code> при импорте оборачивает все публичные async-методы: если event loop не запущен — метод выполняется синхронно через <code>loop.run_until_complete()</code>; если запущен — возвращает coroutine. Это позволяет использовать клиент и в sync-скриптах, и в async-коде без изменений.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># sync-скрипт (loop не запущен)
+from herokutl.sync import TelegramClient
+with TelegramClient('session', api_id, api_hash) as client:
+    print(client.get_me())           # без await!
+
+# async-код (loop запущен)
+from herokutl import TelegramClient
+async def main():
+    async with TelegramClient('session', api_id, api_hash) as client:
+        print(await client.get_me())  # с await</code></pre>
+      <div class="callout callout-blue">В Heroku-userbot всегда async-контекст. Используй <code>await</code>.</div>
+
+      <h2 id="ch15s5">TotalList и RequestIter</h2>
+      <p><code>TotalList</code> — обычный list с атрибутом <code>.total</code> (общее количество на сервере, даже если получено меньше). Возвращается из <code>get_messages()</code>, <code>get_participants()</code> и т.д.</p>
+      <p><code>RequestIter</code> — абстрактный базовый класс для всех пагинированных итераторов. Поддерживает <code>async for</code> и синхронный <code>for</code>, метод <code>.collect()</code> → TotalList, параметр <code>wait_time</code> — задержка между запросами, <code>reverse</code> — обратный порядок.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>msgs = await client.get_messages(chat, limit=50)
+print(msgs.total)   # например 12847 — всего в чате
+print(len(msgs))    # 50 — получено сейчас
+
+# collect() собирает итератор в TotalList
+all_users = await client.iter_participants(chat).collect()
+print(all_users.total)</code></pre>
+
+      <h2 id="ch15s6">Типизация (hints.py)</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Тип</th><th>Что принимает</th></tr></thead>
+        <tbody>
+          <tr><td><code>EntityLike</code></td><td>str (username), int (ID), Phone, Peer, InputPeer, User/Chat/Channel, UserFull/ChatFull</td></tr>
+          <tr><td><code>FileLike</code></td><td>str (путь), URL, bot file ID, bytes, BinaryIO, TypeMessageMedia, TypeInputFile, TypePhoto, TypeDocument…</td></tr>
+          <tr><td><code>MessageLike</code></td><td>str или объект Message</td></tr>
+          <tr><td><code>MessageIDLike</code></td><td>int, Message, TypeInputMessage</td></tr>
+          <tr><td><code>DateLike</code></td><td>float (unix timestamp), datetime, date, timedelta или None</td></tr>
+          <tr><td><code>MarkupLike</code></td><td>TypeReplyMarkup, Button, List[Button], List[List[Button]]</td></tr>
+          <tr><td><code>ProgressCallback</code></td><td>Callable[[int, int], None] — (received, total)</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">herokutl 2.0.0</span>
+        <span class="tag blue">asyncio</span>
+        <span class="tag green">Python 3.8+</span>
+        <span class="tag orange">pip install heroku-tl-new</span>
+      </div>`
+  },
+  {
+    id: 'ch16', section:'herokutl', num:16, icon:'🔌', title:'TelegramClient: подключение и сессии',
+    shortDesc:'Параметры __init__, connect/disconnect, сессии, DC, Takeout',
+    sub:[
+      {id:'ch16s1',title:'Параметры конструктора'},
+      {id:'ch16s2',title:'Жизненный цикл'},
+      {id:'ch16s3',title:'Сессии'},
+      {id:'ch16s4',title:'Типы соединений'},
+      {id:'ch16s5',title:'Прямой вызов MTProto'},
+      {id:'ch16s6',title:'Takeout (экспорт данных)'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🔌</div>
+        <div><h1>TelegramClient: подключение и сессии</h1><p class="ch-sub">Инициализация, жизненный цикл, сессии, Takeout</p></div>
+      </div>
+
+      <h2 id="ch16s1">Параметры конструктора</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>TelegramClient(
+    session,                    # str | Path | Session — файл/объект; None = MemorySession
+    api_id,                     # int — с my.telegram.org
+    api_hash,                   # str — с my.telegram.org
+
+    # --- Сеть ---
+    connection=ConnectionTcpFull,   # тип TCP-соединения
+    use_ipv6=False,                 # использовать IPv6
+    proxy=None,                     # dict/tuple для SOCKS/MTProxy
+    local_addr=None,                # привязка к сетевому интерфейсу
+    timeout=10,                     # таймаут подключения (сек)
+
+    # --- Retry ---
+    request_retries=5,              # повторы запроса (-1 = бесконечно)
+    connection_retries=5,           # повторы подключения
+    retry_delay=1,                  # пауза между попытками (сек)
+    auto_reconnect=True,
+
+    # --- Апдейты ---
+    receive_updates=True,           # False = не получать Update
+    sequential_updates=False,       # True = обработка по очереди (не параллельно)
+    catch_up=False,                 # True = получить пропущенные после реконнекта
+
+    # --- Flood ---
+    flood_sleep_threshold=60,       # авто-sleep при FloodWait ≤ N сек
+
+    # --- Устройство ---
+    device_model=None,              # 'PC 64bit' по умолчанию
+    system_version=None,
+    app_version=None,               # herokutl.__version__ по умолчанию
+    lang_code='en',
+
+    # --- Кэш ---
+    entity_cache_limit=5000,        # лимит сущностей в RAM до flush в сессию
+)</code></pre>
+
+      <h2 id="ch16s2">Жизненный цикл</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Метод</th><th>Sync?</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>connect()</code></td><td>async</td><td>TCP-соединение → auth_key → запуск update loop + keepalive loop</td></tr>
+          <tr><td><code>disconnect()</code></td><td>sync/async</td><td>Сохраняет сессию, отменяет все задачи, закрывает соединение</td></tr>
+          <tr><td><code>is_connected()</code></td><td>sync</td><td>Проверить состояние</td></tr>
+          <tr><td><code>start(phone, password, bot_token, ...)</code></td><td>sync/async</td><td>connect + login. Интерактивный по умолчанию</td></tr>
+          <tr><td><code>run_until_disconnected()</code></td><td>sync/async</td><td>Блокирует до отключения. Уведомляет Telegram об интересе к апдейтам</td></tr>
+          <tr><td><code>set_proxy(proxy)</code></td><td>sync</td><td>Меняет прокси (вступит при следующем реконнекте)</td></tr>
+          <tr><td><code>loop</code></td><td>property</td><td>asyncio.AbstractEventLoop</td></tr>
+          <tr><td><code>disconnected</code></td><td>property</td><td>Future → резолвится при отключении</td></tr>
+          <tr><td><code>catch_up()</code></td><td>async</td><td>Принудительно запросить пропущенные апдейты</td></tr>
+          <tr><td><code>set_receive_updates(bool)</code></td><td>async</td><td>Включить/выключить приём апдейтов на лету</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Рекомендуемый способ — context manager
+async with TelegramClient('anon', api_id, api_hash) as client:
+    me = await client.get_me()
+
+# Вход как бот
+await client.start(bot_token='12345:AAABBB...')
+
+# QR-логин
+qr = await client.qr_login()
+display_as_qr(qr.url)
+await qr.wait()   # ждать сканирования</code></pre>
+      <div class="callout callout-orange">В Heroku-userbot <strong>не вызывай</strong> <code>connect()</code>/<code>disconnect()</code>/<code>start()</code> вручную — клиент уже запущен.</div>
+
+      <h2 id="ch16s3">Сессии</h2>
+      <p>Сессия хранит: auth_key, DC ID + IP + port, access_hash сущностей, pts/qts/seq состояние апдейтов. Версия схемы SQLite — <strong>8</strong>.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Класс</th><th>Хранилище</th><th>Использование</th></tr></thead>
+        <tbody>
+          <tr><td><code>SQLiteSession</code></td><td><code>.session</code> файл</td><td>По умолчанию при передаче строки. Сохраняет сущности: username→id, phone→id</td></tr>
+          <tr><td><code>MemorySession</code></td><td>RAM</td><td>Тесты, скрипты. Теряется при остановке</td></tr>
+          <tr><td><code>StringSession</code></td><td>base64 строка</td><td>Heroku/Docker — сессия в переменной окружения</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl.sessions import StringSession
+
+# Сохранить
+string = client.session.save()  # '1BVtsOKAABm...'
+
+# Загрузить
+client = TelegramClient(StringSession('1BVtsOKAABm...'), api_id, api_hash)
+
+# SQLite с tmp_auth_key на диске
+from herokutl.sessions import SQLiteSession
+s = SQLiteSession('mybot', store_tmp_auth_key_on_disk=True)</code></pre>
+
+      <h2 id="ch16s4">Типы соединений</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Класс</th><th>Протокол</th><th>Когда использовать</th></tr></thead>
+        <tbody>
+          <tr><td><code>ConnectionTcpFull</code></td><td>TCP Full</td><td><strong>По умолчанию.</strong> Надёжен, с checksum</td></tr>
+          <tr><td><code>ConnectionTcpAbridged</code></td><td>TCP Abridged</td><td>Минимальный overhead</td></tr>
+          <tr><td><code>ConnectionTcpIntermediate</code></td><td>TCP Intermediate</td><td>Компромисс</td></tr>
+          <tr><td><code>ConnectionTcpObfuscated</code></td><td>Obfuscated</td><td>Для DPI-обхода без MTProxy</td></tr>
+          <tr><td><code>ConnectionTcpMTProxyAbridged</code></td><td>MTProxy Abridged</td><td>MTProxy сервер</td></tr>
+          <tr><td><code>ConnectionTcpMTProxyIntermediate</code></td><td>MTProxy Intermediate</td><td>MTProxy сервер</td></tr>
+          <tr><td><code>ConnectionTcpMTProxyRandomizedIntermediate</code></td><td>MTProxy Random</td><td>MTProxy с dd-secret</td></tr>
+          <tr><td><code>ConnectionHttp</code></td><td>HTTP</td><td>Редко нужен</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl.network import ConnectionTcpMTProxyRandomizedIntermediate
+
+client = TelegramClient('anon', api_id, api_hash,
+    connection=ConnectionTcpMTProxyRandomizedIntermediate,
+    proxy=('proxy.example.com', 443, 'dd' + 'secret_hex_here')
+)</code></pre>
+
+      <h2 id="ch16s5">Прямой вызов MTProto</h2>
+      <p>Любой TL-запрос через <code>await client(Request(...))</code>. Полный доступ к Telegram API.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl.tl import functions, types
+
+# Один запрос
+config = await client(functions.help.GetConfigRequest())
+
+# Несколько параллельно (ordered=True — последовательно)
+me, dc = await client([
+    functions.users.GetUsersRequest([types.InputUserSelf()]),
+    functions.help.GetNearestDcRequest(),
+])</code></pre>
+
+      <h2 id="ch16s6">Takeout — экспорт данных</h2>
+      <p>Режим Takeout оборачивает запросы в <code>InvokeWithTakeoutRequest</code>. Некоторые методы имеют сниженные flood-лимиты — полезно при массовой выгрузке истории.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl import errors
+
+try:
+    async with client.takeout(
+        contacts=True,
+        users=True,
+        chats=True,
+        megagroups=True,
+        channels=True,
+        files=True,
+        max_file_size=1024*1024*100  # 100 МБ
+    ) as takeout:
+        async for msg in takeout.iter_messages(chat, wait_time=0):
+            print(msg.text)
+
+        takeout.success = True  # явно отметить успех
+
+except errors.TakeoutInitDelayError as e:
+    print(f'Подождите {e.seconds} секунд перед Takeout')
+
+# Завершить Takeout вручную
+await client.end_takeout(success=True)</code></pre>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">telegrambaseclient.py</span>
+        <span class="tag blue">auth.py</span>
+        <span class="tag green">sessions/</span>
+        <span class="tag orange">account.py</span>
+      </div>`
+  },
+  {
+    id: 'ch17', section:'herokutl', num:17, icon:'✉️', title:'Сообщения',
+    shortDesc:'send_message, iter_messages, edit, delete, pin, react, translate',
+    sub:[
+      {id:'ch17s1',title:'send_message'},
+      {id:'ch17s2',title:'send_file'},
+      {id:'ch17s3',title:'iter_messages / get_messages'},
+      {id:'ch17s4',title:'Редактирование и удаление'},
+      {id:'ch17s5',title:'Реакции и перевод'},
+      {id:'ch17s6',title:'Форматирование текста'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">✉️</div>
+        <div><h1>Сообщения</h1><p class="ch-sub">Отправка, получение, редактирование, реакции</p></div>
+      </div>
+
+      <h2 id="ch17s1">send_message</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>await client.send_message(
+    entity,                    # EntityLike — чат / пользователь
+    message='',                # str | Message
+    reply_to=None,             # int msg_id | Message
+    parse_mode=(),             # 'html' | 'md' | None | () = дефолт
+    formatting_entities=None,  # List[TypeMessageEntity] — готовые entity
+    link_preview=True,
+    file=None,                 # FileLike | List[FileLike] — прикрепить файл/альбом
+    force_document=False,
+    buttons=None,              # MarkupLike — inline/reply кнопки
+    silent=None,
+    background=None,
+    schedule=None,             # DateLike — запланировать
+    clear_draft=False,
+    comment_to=None,           # int | Message — ответ в комментариях поста
+    send_as=None,              # EntityLike — от имени канала
+    message_effect_id=None,    # int — эффект (анимация)
+    nosound_video=None,
+)  # → Message</code></pre>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Примеры
+await client.send_message('me', 'Привет!')
+
+await client.send_message(chat, '&lt;b&gt;Жирный&lt;/b&gt;',
+    parse_mode='html', reply_to=msg_id)
+
+from herokutl.tl.custom import Button
+await client.send_message(chat, 'Выбери:', buttons=[
+    [Button.inline('Да', b'yes'), Button.inline('Нет', b'no')],
+    [Button.url('Сайт', 'https://example.com')]
+])
+
+from datetime import timedelta
+await client.send_message(chat, 'Через час', schedule=timedelta(hours=1))</code></pre>
+
+      <h2 id="ch17s2">send_file</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>await client.send_file(
+    entity,
+    file,                    # FileLike | List[FileLike]
+    caption=None,            # str | List[str] — подпись (для альбома — список)
+    force_document=False,
+    mime_type=None,
+    file_size=None,
+    progress_callback=None,  # Callable[[sent, total], None]
+    reply_to=None,
+    attributes=[],
+    thumb=None,              # FileLike — обложка для видео/документа
+    allow_cache=True,        # дедупликация по MD5
+    parse_mode=(),
+    voice_note=False,        # аудио → голосовое
+    video_note=False,        # видео → кружок
+    supports_streaming=False,
+    buttons=None,
+    silent=None,
+    schedule=None,
+    comment_to=None,
+    ttl=None,                # секунды до самоуничтожения (фото/видео)
+    spoiler=False,           # спойлер-медиа
+    send_as=None,
+    message_effect_id=None,
+)  # → Message | List[Message]
+
+# Альбом
+await client.send_file(chat, ['1.jpg', '2.jpg', '3.jpg'],
+    caption=['Первое фото', None, 'Третье фото'])
+
+# Предзагрузить файл (использовать повторно)
+inp = await client.upload_file('big_video.mp4',
+    part_size_kb=512,
+    progress_callback=lambda c,t: print(f'{c/t:.0%}'))</code></pre>
+
+      <h2 id="ch17s3">iter_messages / get_messages</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>iter_messages(
+    entity,                 # None = глобальный поиск
+    limit=None,             # None = вся история
+    offset_date=None,       # DateLike — сообщения до этой даты
+    offset_id=0,
+    max_id=0,               # исключить сообщения с ID >= max_id
+    min_id=0,               # исключить сообщения с ID <= min_id
+    add_offset=0,
+    search=None,            # str — поиск по тексту
+    filter=None,            # TypeMessagesFilter (фото, видео, документы…)
+    from_user=None,         # EntityLike — только от этого пользователя
+    wait_time=None,         # float — задержка между запросами (для Takeout)
+    ids=None,               # int | List[int] — конкретные ID
+    reverse=False,          # True = от старых к новым
+    reply_to=None,          # int — только ответы на это сообщение
+    scheduled=False,        # True = запланированные сообщения
+)</code></pre>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Последние 20
+msgs = await client.get_messages(chat, limit=20)
+print(msgs.total)  # всего в чате
+
+# По ID
+msg = await client.get_messages(chat, ids=42)  # → Message (не список!)
+msgs = await client.get_messages(chat, ids=[10, 20, 30])
+
+# Поиск
+async for m in client.iter_messages(chat, search='важно', from_user='username'):
+    print(m.text)
+
+# Только фото, от старых к новым
+from herokutl.tl.types import InputMessagesFilterPhotos
+async for m in client.iter_messages(chat,
+        filter=InputMessagesFilterPhotos, reverse=True):
+    await m.download_media('/tmp/photos/')</code></pre>
+
+      <h2 id="ch17s4">Редактирование и удаление</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Редактировать
+await client.edit_message(chat, message_id, 'Новый текст')
+await client.edit_message(chat, message_id,
+    parse_mode='html', buttons=None)   # убрать кнопки
+
+# Удалить (revoke=True — у всех)
+await client.delete_messages(chat, [id1, id2], revoke=True)
+
+# Закрепить / открепить
+await client.pin_message(chat, message_id, notify=False, pm_oneside=False)
+await client.unpin_message(chat, message_id)
+await client.unpin_message(chat)   # открепить ВСЕ
+
+# Переслать
+await client.forward_messages(target, messages=[m1, m2], from_peer=source)
+
+# Прочитать
+await client.send_read_acknowledge(chat, message)       # до этого msg
+await client.send_read_acknowledge(chat)                # весь чат
+await client.send_read_acknowledge(chat,
+    clear_mentions=True, clear_reactions=True)</code></pre>
+
+      <h2 id="ch17s5">Реакции и перевод</h2>
+      <p>Эти методы уникальны для herokutl — в оригинальном Telethon их нет.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Реакция (emoji строкой)
+await client.send_reaction(chat, message_id, '👍')
+await client.send_reaction(chat, message_id, '🔥', big=True)
+await client.send_reaction(chat, message_id, None)   # убрать
+
+# Быстрая реакция по умолчанию для аккаунта
+await client.set_quick_reaction('❤️')
+
+# Перевод через Telegram API
+text = await client.translate(chat, message_id, to_lang='ru')
+# Или передать текст напрямую (сохранит форматирование)
+text = await client.translate(chat, message_id, to_lang='en',
+    raw_text='Кастомный текст для перевода')</code></pre>
+
+      <h2 id="ch17s6">Форматирование текста</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Стиль</th><th>Markdown</th><th>HTML</th></tr></thead>
+        <tbody>
+          <tr><td>Жирный</td><td><code>**текст**</code></td><td><code>&lt;b&gt;текст&lt;/b&gt;</code></td></tr>
+          <tr><td>Курсив</td><td><code>__текст__</code></td><td><code>&lt;i&gt;текст&lt;/i&gt;</code></td></tr>
+          <tr><td>Зачёркнутый</td><td><code>~~текст~~</code></td><td><code>&lt;s&gt;текст&lt;/s&gt;</code></td></tr>
+          <tr><td>Моноширинный</td><td><code>\`код\`</code></td><td><code>&lt;code&gt;код&lt;/code&gt;</code></td></tr>
+          <tr><td>Блок кода</td><td><code>\`\`\`lang↵код\`\`\`</code></td><td><code>&lt;pre&gt;&lt;code class="language-python"&gt;…&lt;/code&gt;&lt;/pre&gt;</code></td></tr>
+          <tr><td>Подчёркнутый</td><td>—</td><td><code>&lt;u&gt;текст&lt;/u&gt;</code></td></tr>
+          <tr><td>Спойлер</td><td>—</td><td><code>&lt;tg-spoiler&gt;текст&lt;/tg-spoiler&gt;</code></td></tr>
+          <tr><td>Ссылка</td><td><code>[текст](url)</code></td><td><code>&lt;a href="url"&gt;текст&lt;/a&gt;</code></td></tr>
+          <tr><td>Цитата</td><td>—</td><td><code>&lt;blockquote&gt;…&lt;/blockquote&gt;</code></td></tr>
+          <tr><td>Раскрываемая цитата</td><td>—</td><td><code>&lt;blockquote expandable&gt;…&lt;/blockquote&gt;</code></td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Изменить режим по умолчанию
+client.parse_mode = 'html'   # или 'md', None
+
+# split_text: разбить длинное сообщение без разрыва форматирования
+from herokutl.utils import split_text
+for chunk_text, chunk_ents in split_text(long_text, entities, limit=4096):
+    await client.send_message(chat, chunk_text,
+        formatting_entities=chunk_ents, parse_mode=None)</code></pre>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">messages.py</span>
+        <span class="tag blue">uploads.py</span>
+        <span class="tag green">extensions/html.py + markdown.py</span>
+      </div>`
+  },
+  {
+    id: 'ch18', section:'herokutl', num:18, icon:'👥', title:'Пользователи, чаты, права',
+    shortDesc:'get_entity, участники, edit_admin, iter_admin_log, action',
+    sub:[
+      {id:'ch18s1',title:'Получение сущностей'},
+      {id:'ch18s2',title:'Участники и поиск'},
+      {id:'ch18s3',title:'Администрирование'},
+      {id:'ch18s4',title:'Действия (typing, статусы)'},
+      {id:'ch18s5',title:'Admin Log и статистика'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">👥</div>
+        <div><h1>Пользователи, чаты, права</h1><p class="ch-sub">Сущности, участники, администрирование, лог</p></div>
+      </div>
+
+      <h2 id="ch18s1">Получение сущностей</h2>
+      <p>«Сущность» — объект <code>User</code>, <code>Chat</code> или <code>Channel</code>. Большинство методов принимают <em>EntityLike</em>: username, ID, phone, ссылку-приглашение или уже готовый объект.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Метод</th><th>Описание</th><th>Примечание</th></tr></thead>
+        <tbody>
+          <tr><td><code>get_me(input_peer=False)</code></td><td>Текущий аккаунт</td><td><code>input_peer=True</code> → InputPeer без запроса</td></tr>
+          <tr><td><code>is_bot()</code></td><td>True если бот</td><td>sync</td></tr>
+          <tr><td><code>is_user_authorized()</code></td><td>Авторизован?</td><td>sync</td></tr>
+          <tr><td><code>get_entity(entity)</code></td><td>Полный User/Chat/Channel</td><td>Каждый username → API-запрос. Дорого!</td></tr>
+          <tr><td><code>get_input_entity(peer)</code></td><td>InputPeer из кэша сессии</td><td>Дёшево. Используй вместо get_entity там, где нужен только InputPeer</td></tr>
+          <tr><td><code>get_peer_id(peer, add_mark=True)</code></td><td>Числовой ID</td><td>С <code>-100</code> для каналов</td></tr>
+          <tr><td><code>get_profile_photos(entity, limit=None)</code></td><td>Список фото профиля</td><td>TotalList</td></tr>
+          <tr><td><code>download_profile_photo(entity, file)</code></td><td>Скачать аватар</td><td>file=bytes → bytes</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code"># Разные EntityLike
+user = await client.get_entity('username')
+user = await client.get_entity(123456789)
+user = await client.get_entity('+79001234567')
+chat = await client.get_entity('t.me/joinchat/AAABBB')
+
+# Эффективно: кэш → полный объект
+inp = await client.get_input_entity('username')  # из кэша
+user = await client.get_entity(inp)
+
+# Декодировать Bot API ID
+from herokutl.utils import resolve_id, get_peer_id
+from herokutl.tl.types import PeerChannel
+raw_id, peer_cls = resolve_id(-1001234567890)  # (1234567890, PeerChannel)</code></pre>
+
+      <h2 id="ch18s2">Участники и поиск</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl.tl.types import (
+    ChannelParticipantsAdmins, ChannelParticipantsBots,
+    ChannelParticipantsSearch, ChannelParticipantsRecent
+)
+
+# Все участники
+users = await client.get_participants(chat)
+print(users.total)  # с .total
+
+# Итератор с фильтром
+async for user in client.iter_participants(chat,
+        filter=ChannelParticipantsAdmins()):
+    print(user.id, user.first_name)
+
+# Поиск по имени
+async for user in client.iter_participants(chat, search='Иван', limit=10):
+    print(user.username)</code></pre>
+
+      <h2 id="ch18s3">Администрирование</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Назначить администратора (все аргументы bool, по умолч. None = не менять)
+await client.edit_admin(chat, user,
+    change_info=True,
+    post_messages=True,      # только для каналов
+    edit_messages=True,      # только для каналов
+    delete_messages=True,
+    ban_users=True,
+    invite_users=True,
+    pin_messages=True,
+    add_admins=False,        # передавать права
+    manage_call=True,
+    anonymous=False,         # анонимный в группе
+    is_admin=True,           # False = снять права
+    title='Модератор'
+)
+
+# Ограничить пользователя (False = ограничить, True = разрешить)
+from datetime import timedelta
+await client.edit_permissions(chat, user,
+    until_date=timedelta(days=7),
+    send_messages=False,
+    send_media=False,
+    send_stickers=False,
+    send_gifs=False,
+    embed_link_previews=False,
+)
+
+# Снять ВСЕ ограничения
+await client.edit_permissions(chat, user)
+
+# Исключить из чата
+await client.kick_participant(chat, user)
+
+# Проверить права конкретного участника
+perms = await client.get_permissions(chat, user)
+print(perms.is_admin, perms.is_creator, perms.is_banned)
+print(perms.ban_users, perms.pin_messages, perms.delete_messages)
+print(perms.has_default_permissions, perms.has_left)
+
+# Дефолтные права чата/канала
+default = await client.get_permissions(chat)</code></pre>
+
+      <h2 id="ch18s4">Действия (typing, статусы)</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Показывать «печатает…» пока работает код
+async with client.action(chat, 'typing'):
+    await asyncio.sleep(3)
+    await client.send_message(chat, 'Готово!')
+
+# Доступные действия:
+# 'typing', 'contact', 'game', 'geo'
+# 'upload_photo', 'upload_document', 'upload_video', 'upload_audio', 'upload_round'
+# 'record_audio', 'record_round'
+# 'cancel'</code></pre>
+
+      <h2 id="ch18s5">Admin Log и статистика</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Лог действий администраторов
+async for event in client.iter_admin_log(chat,
+        limit=100,
+        search='banned',         # поиск по тексту
+        admins=[admin_user],     # только от этих админов
+        join=True,               # вход
+        leave=True,              # выход
+        invite=True,             # приглашения
+        restrict=True,           # ограничения
+        unrestrict=True,         # снятие ограничений
+        ban=True,                # баны
+        unban=True,
+        promote=True,            # назначения
+        demote=True,             # снятие прав
+        info=True,               # изменение инфо чата
+        settings=True,
+        pinned=True,             # закрепление
+        edit=True,               # редактирование сообщений
+        delete=True):            # удаление
+    print(event.user_id, type(event.action).__name__)
+
+# Статистика канала / поста
+stats = await client.get_stats(channel)
+msg_stats = await client.get_stats(channel, message=post_id)</code></pre>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">users.py</span>
+        <span class="tag blue">chats.py</span>
+        <span class="tag green">tl/custom/participantpermissions.py</span>
+      </div>`
+  },
+  {
+    id: 'ch19', section:'herokutl', num:19, icon:'📁', title:'Файлы, диалоги, Conversations',
+    shortDesc:'download_media, iter_dialogs, Conversation API',
+    sub:[
+      {id:'ch19s1',title:'Скачивание медиа'},
+      {id:'ch19s2',title:'File — метаданные вложений'},
+      {id:'ch19s3',title:'Диалоги и папки'},
+      {id:'ch19s4',title:'Conversation API'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">📁</div>
+        <div><h1>Файлы, диалоги, Conversations</h1><p class="ch-sub">Скачивание, управление диалогами, пошаговые диалоги</p></div>
+      </div>
+
+      <h2 id="ch19s1">Скачивание медиа</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Основной метод
+await client.download_media(
+    message,            # Message | TypeMedia
+    file=None,          # str (путь/папка) | bytes | BinaryIO — None = папка ./
+    thumb=None,         # int | TypePhotoSize — размер превью
+    progress_callback=None   # Callable[[recv, total], None]
+)  # → str (путь) | bytes | None
+
+path = await client.download_media(msg)                    # в текущую папку
+path = await client.download_media(msg, '/tmp/photos/')    # в папку
+data = await client.download_media(msg, file=bytes)        # → bytes
+path = await client.download_media(msg, thumb=-1)          # самое маленькое превью
+
+# Фото профиля
+path = await client.download_profile_photo(user)
+data = await client.download_profile_photo(user, file=bytes)
+
+# Потоковая итерация по чанкам
+async for chunk in client.iter_download(msg.document, chunk_size=1024*512):
+    output_file.write(chunk)</code></pre>
+      <div class="callout callout-blue">Установи <code>pip install cryptg</code> — нативный AES ускоряет расшифровку загрузок в несколько раз.</div>
+
+      <h2 id="ch19s2">File — метаданные вложений</h2>
+      <p><code>msg.file</code> возвращает объект <code>File</code> — удобный доступ к атрибутам вложения.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Свойство</th><th>Тип</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>.name</code></td><td>str|None</td><td>Имя файла (DocumentAttributeFilename)</td></tr>
+          <tr><td><code>.ext</code></td><td>str|None</td><td>Расширение из MIME-типа или имени файла</td></tr>
+          <tr><td><code>.mime_type</code></td><td>str|None</td><td><code>image/jpeg</code> для фото, иначе из Document</td></tr>
+          <tr><td><code>.size</code></td><td>int|None</td><td>Размер в байтах</td></tr>
+          <tr><td><code>.width</code> / <code>.height</code></td><td>int|None</td><td>Размеры изображения или видео в пикселях</td></tr>
+          <tr><td><code>.duration</code></td><td>int|None</td><td>Длительность аудио/видео в секундах</td></tr>
+          <tr><td><code>.title</code></td><td>str|None</td><td>Название трека</td></tr>
+          <tr><td><code>.performer</code></td><td>str|None</td><td>Исполнитель</td></tr>
+          <tr><td><code>.emoji</code></td><td>str|None</td><td>Эмодзи стикера</td></tr>
+          <tr><td><code>.sticker_set</code></td><td>InputStickerSet|None</td><td>Паки стикеров</td></tr>
+          <tr><td><code>.id</code></td><td>str|None</td><td>Bot File ID (устаревший, для совместимости)</td></tr>
+          <tr><td><code>.media</code></td><td>Photo|Document</td><td>Исходный TL-объект</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">@client.on(events.NewMessage)
+async def handler(event):
+    f = event.message.file
+    if f:
+        print(f.name, f.size, f.mime_type)
+        if f.duration:
+            print(f'Длительность: {f.duration}с')</code></pre>
+
+      <h2 id="ch19s3">Диалоги и папки</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Итератор диалогов
+async for dialog in client.iter_dialogs(
+        limit=None,
+        ignore_pinned=False,   # пропустить закреплённые
+        ignore_migrated=False,  # пропустить мигрировавшие группы
+        folder=None,           # 0 = основная, 1 = архив
+        archived=None,         # True = только архивные
+):
+    print(dialog.id, dialog.title, dialog.entity)
+    print(dialog.unread_count, dialog.message.text)
+
+# get_dialogs — то же, возвращает TotalList
+dialogs = await client.get_dialogs(limit=20)
+
+# Переместить в архив или обратно
+await client.edit_folder(chat, folder=1)           # → архив
+await client.edit_folder([chat1, chat2], folder=0) # → основная
+await client.edit_folder(folder=0, unpack=True)    # распаковать папку
+
+# Покинуть / удалить диалог
+await client.delete_dialog(chat)
+await client.delete_dialog(chat, revoke=True)  # с удалением истории (если есть права)
+
+# Черновики
+drafts = await client.get_drafts()       # все черновики
+[d] = await client.get_drafts(chat)
+print(d.text, d.date)
+await d.set_message('Текст черновика')
+await d.send()
+await d.delete()</code></pre>
+
+      <h2 id="ch19s4">Conversation API</h2>
+      <p>Позволяет вести пошаговый диалог, ожидая конкретные ответы. Полезно для ботов-помощников и скриптов.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>async with client.conversation(user, timeout=30) as conv:
+    # Отправить и ждать ответ
+    await conv.send_message('Как тебя зовут?')
+    name_msg = await conv.get_response()      # любое следующее сообщение
+    name = name_msg.text
+
+    # Ждать именно reply на наше сообщение
+    await conv.send_message('Подтверди (ответь на это сообщение):')
+    confirmation = await conv.get_reply()
+
+    # Ждать, пока пользователь прочитает
+    await conv.wait_read()
+
+    # Ждать произвольное событие
+    from herokutl import events
+    btn_event = await conv.wait_event(
+        events.CallbackQuery(data=b'ok'),
+        timeout=60
+    )</code></pre>
+      <div class="callout callout-orange">
+        <strong>Ограничение:</strong> только один активный Conversation на чат одновременно. Параллельный вызов вызовет <code>AlreadyInConversationError</code>. В Heroku-модулях для форм лучше использовать inline-панели.
+      </div>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">downloads.py</span>
+        <span class="tag blue">dialogs.py</span>
+        <span class="tag green">tl/custom/file.py</span>
+        <span class="tag orange">tl/custom/conversation.py</span>
+      </div>`
+  },
+  {
+    id: 'ch20', section:'herokutl', num:20, icon:'⚡', title:'События (Events)',
+    shortDesc:'NewMessage, CallbackQuery, ChatAction, UserUpdate, Album, Raw',
+    sub:[
+      {id:'ch20s1',title:'Система событий'},
+      {id:'ch20s2',title:'NewMessage / MessageEdited'},
+      {id:'ch20s3',title:'CallbackQuery'},
+      {id:'ch20s4',title:'ChatAction'},
+      {id:'ch20s5',title:'UserUpdate'},
+      {id:'ch20s6',title:'InlineQuery'},
+      {id:'ch20s7',title:'Album, MessageRead, MessageDeleted, Raw'},
+      {id:'ch20s8',title:'events.register (client-less)'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">⚡</div>
+        <div><h1>События (Events)</h1><p class="ch-sub">Полный разбор всех классов событий</p></div>
+      </div>
+
+      <h2 id="ch20s1">Система событий</h2>
+      <p>Все обработчики — async-функции. Регистрируются через <code>@client.on()</code> или <code>client.add_event_handler(cb, event)</code>. Каждое событие наследует <code>EventCommon(ChatGetter, SenderGetter)</code>.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Поле / метод EventCommon</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>event.chat_id</code></td><td>Marked integer ID чата</td></tr>
+          <tr><td><code>event.chat</code></td><td>Кэшированный объект чата (может быть None)</td></tr>
+          <tr><td><code>await event.get_chat()</code></td><td>Гарантированный объект чата (API-запрос если нужно)</td></tr>
+          <tr><td><code>await event.get_input_chat()</code></td><td>InputPeer чата</td></tr>
+          <tr><td><code>event.sender_id</code></td><td>ID отправителя</td></tr>
+          <tr><td><code>await event.get_sender()</code></td><td>Полный объект отправителя</td></tr>
+          <tr><td><code>event.is_private</code></td><td>Личный чат?</td></tr>
+          <tr><td><code>event.is_group</code></td><td>Группа или мегагруппа?</td></tr>
+          <tr><td><code>event.is_channel</code></td><td>Канал или мегагруппа?</td></tr>
+          <tr><td><code>await event.respond(...)</code></td><td>Ответить в тот же чат</td></tr>
+          <tr><td><code>await event.reply(...)</code></td><td>Ответить реплаем</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl import events
+
+@client.on(events.NewMessage)
+async def handler(event):
+    ...
+
+# Управление обработчиками
+client.add_event_handler(handler, events.NewMessage)
+client.remove_event_handler(handler, events.NewMessage)
+client.remove_event_handler(handler)   # убрать для всех событий
+for cb, ev in client.list_event_handlers():
+    print(type(ev).__name__, cb.__name__)
+
+# Прервать цепочку обработчиков
+raise events.StopPropagation</code></pre>
+
+      <h2 id="ch20s2">NewMessage / MessageEdited</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">@client.on(events.NewMessage(
+    incoming=True,               # только входящие
+    outgoing=False,              # только исходящие
+    chats=['@channel', 123456],  # только в этих чатах
+    blacklist_chats=False,       # инвертировать список chats
+    from_users=['@user', 99],    # только от этих отправителей
+    forwards=None,               # None=все | True=только форварды | False=без форвардов
+    pattern=r'(?i)^/start',      # regex или callable
+))
+async def on_msg(event):
+    msg: Message = event.message
+    text: str = event.text          # = event.message.text
+    raw: str = event.raw_text       # без форматирования
+
+    await event.reply('Привет!')
+    await event.respond('В тот же чат')
+    await event.delete()
+    await event.forward_to(other_chat)</code></pre>
+      <p><code>MessageEdited</code> — наследник <code>NewMessage</code>, идентичные параметры.</p>
+
+      <h2 id="ch20s3">CallbackQuery</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@client.on(events.CallbackQuery(
+    data=b'confirm',          # bytes, str или compiled regex
+    pattern=rb'^action_\\d+', # regex по data
+    chats=[chat_id],
+))
+async def on_btn(event):
+    data: bytes = event.data         # payload кнопки
+    msg_id: int = event.message_id
+    chat_instance: str = event.chat_instance
+
+    await event.answer('Готово!')                    # тост
+    await event.answer(alert=True, message='Внимание!')  # popup
+    await event.edit('Новый текст сообщения')
+    msg = await event.get_message()                  # исходное сообщение
+
+    if event.via_inline:                             # кнопка из inline-режима
+        ...</code></pre>
+
+      <h2 id="ch20s4">ChatAction</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@client.on(events.ChatAction)
+async def on_action(event):
+    if event.user_joined or event.user_added:
+        user = await event.get_user()
+        adder = await event.get_added_by()
+        await event.respond(f'Добро пожаловать, {user.first_name}!')
+
+    elif event.user_left or event.user_kicked:
+        kicker = await event.get_kicked_by()
+
+    elif event.new_title:
+        print('Чат переименован:', event.new_title)
+
+    elif event.new_photo:
+        pass  # изменено фото чата
+
+    elif event.new_pin:
+        pinned = await event.get_pinned_message()
+        all_pinned = await event.get_pinned_messages()
+
+    elif event.created:
+        print('Чат создан')</code></pre>
+
+      <h2 id="ch20s5">UserUpdate</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@client.on(events.UserUpdate)
+async def on_user(event):
+    user_id = event.user_id
+    user = await event.get_user()
+    input_user = await event.get_input_user()
+
+    if event.typing:       print('Печатает')
+    if event.uploading:    print('Загружает файл')
+    if event.recording:    print('Записывает голос')
+    if event.playing:      print('Играет в игру')
+    if event.cancel:       print('Остановил действие')
+    if event.geo:          print('Отправляет геолокацию')</code></pre>
+
+      <h2 id="ch20s6">InlineQuery</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">@client.on(events.InlineQuery(
+    users=['@allowed_user'],   # только от этих
+    pattern=r'^поиск (.+)',
+))
+async def on_inline(event):
+    text: str = event.text
+    offset: str = event.offset
+    geo = event.geo    # GeoPoint или None
+    
+    builder = event.builder   # InlineBuilder
+    await event.answer([
+        builder.article(
+            title='Заголовок',
+            description='Описание',
+            text='Текст сообщения',
+        ),
+        builder.photo(file=photo_url),
+        builder.document(file=doc_path, title='Документ'),
+    ],
+    next_offset='page2',    # следующая страница
+    gallery=True,           # показать сеткой
+    cache_time=300          # кэш 5 минут
+)</code></pre>
+
+      <h2 id="ch20s7">Album, MessageRead, MessageDeleted, Raw</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">@client.on(events.Album)
+async def on_album(event):
+    for msg in event.messages:    # List[Message]
+        print(msg.id, msg.file)
+    print(event.grouped_id)
+    print(event.text)             # текст первого элемента альбома
+
+@client.on(events.MessageRead)
+async def on_read(event):
+    print(event.inbox)    # True = мои входящие прочитали
+    print(event.max_id)   # до какого ID прочитали
+
+@client.on(events.MessageDeleted)
+async def on_del(event):
+    print(event.deleted_ids)   # List[int] — удалённые ID
+    print(event.chat_id)       # None для личных чатов
+
+# Raw — любой TL-объект без обработки
+from herokutl.tl import types
+@client.on(events.Raw(types.UpdateBotCallbackQuery))
+async def on_raw(update):
+    print(update.stringify())</code></pre>
+
+      <h2 id="ch20s8">events.register — client-less обработчики</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Зарегистрировать обработчик без клиента (для внешних модулей)
+from herokutl import events
+
+@events.register(events.NewMessage(pattern='hello'))
+async def greet(event):
+    await event.reply('Hi!')
+
+# Потом подключить к клиенту
+client.add_event_handler(greet)
+
+# Снять регистрацию
+events.unregister(greet, events.NewMessage)
+
+# Проверить
+print(events.is_handler(greet))   # True
+print(events.list(greet))         # [NewMessage(pattern='hello')]</code></pre>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">events/</span>
+        <span class="tag blue">client/updates.py</span>
+        <span class="tag green">StopPropagation</span>
+      </div>`
+  },
+  {
+    id: 'ch21', section:'herokutl', num:21, icon:'🔧', title:'Custom типы и utils',
+    shortDesc:'Message, Button, Forward, InlineResult, StarGift, utils.*',
+    sub:[
+      {id:'ch21s1',title:'Message'},
+      {id:'ch21s2',title:'Button'},
+      {id:'ch21s3',title:'Forward и ChatGetter/SenderGetter'},
+      {id:'ch21s4',title:'InlineBuilder и InlineResults'},
+      {id:'ch21s5',title:'StarGift и payments'},
+      {id:'ch21s6',title:'utils — справочник'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🔧</div>
+        <div><h1>Custom типы и utils</h1><p class="ch-sub">Message, Button, Forward, StarGift, ~50 утилит</p></div>
+      </div>
+
+      <h2 id="ch21s1">Message</h2>
+      <p><code>herokutl.tl.custom.Message</code> — обёртка над <code>types.Message</code>. Все свойства:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Свойство</th><th>Тип</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>.text</code></td><td>str</td><td>Текст с форматированием (HTML или Markdown)</td></tr>
+          <tr><td><code>.raw_text</code></td><td>str</td><td>Чистый текст без форматирования</td></tr>
+          <tr><td><code>.is_reply</code></td><td>bool</td><td>Является ответом на сообщение?</td></tr>
+          <tr><td><code>.forward</code></td><td>Forward|None</td><td>Информация о пересылке</td></tr>
+          <tr><td><code>.reply_to_chat</code></td><td>Chat|None</td><td>Чат источника ответа (для форвардов из каналов)</td></tr>
+          <tr><td><code>.reply_to_sender</code></td><td>User|None</td><td>Отправитель для ответа</td></tr>
+          <tr><td><code>.buttons</code></td><td>List[List[MessageButton]]|None</td><td>Кнопки (кэш, sync)</td></tr>
+          <tr><td><code>.button_count</code></td><td>int</td><td>Общее число кнопок</td></tr>
+          <tr><td><code>.file</code></td><td>File|None</td><td>Метаданные вложения</td></tr>
+          <tr><td><code>.photo</code></td><td>Photo|None</td><td>Фото</td></tr>
+          <tr><td><code>.document</code></td><td>Document|None</td><td>Документ</td></tr>
+          <tr><td><code>.video</code></td><td>Document|None</td><td>Видео</td></tr>
+          <tr><td><code>.audio</code></td><td>Document|None</td><td>Аудио</td></tr>
+          <tr><td><code>.voice</code></td><td>Document|None</td><td>Голосовое сообщение</td></tr>
+          <tr><td><code>.video_note</code></td><td>Document|None</td><td>Видео-кружок</td></tr>
+          <tr><td><code>.gif</code></td><td>Document|None</td><td>GIF-анимация</td></tr>
+          <tr><td><code>.sticker</code></td><td>Document|None</td><td>Стикер</td></tr>
+          <tr><td><code>.contact</code></td><td>MessageMediaContact|None</td><td>Контакт</td></tr>
+          <tr><td><code>.game</code></td><td>Game|None</td><td>Игра</td></tr>
+          <tr><td><code>.geo</code></td><td>GeoPoint|None</td><td>Геолокация</td></tr>
+          <tr><td><code>.poll</code></td><td>Poll|None</td><td>Опрос</td></tr>
+          <tr><td><code>.invoice</code></td><td>Invoice|None</td><td>Счёт</td></tr>
+          <tr><td><code>.dice</code></td><td>MessageMediaDice|None</td><td>Кубик/анимация</td></tr>
+          <tr><td><code>.web_preview</code></td><td>WebPage|None</td><td>Превью ссылки</td></tr>
+          <tr><td><code>.via_bot</code></td><td>User|None</td><td>Через какого бота отправлено</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Методы Message
+await msg.respond('ответ в чат')
+await msg.reply('ответ реплаем')
+await msg.forward_to(other_chat)
+await msg.edit('новый текст')
+await msg.delete()
+await msg.pin(notify=False)
+await msg.unpin()
+await msg.download_media('/tmp/')
+await msg.get_reply_message()      # Message на который отвечает
+
+# Кликнуть кнопку
+await msg.click(0)                 # первая кнопка
+await msg.click(0, 1)              # строка 0, столбец 1
+await msg.click(text='Да')         # по тексту
+await msg.click(data=b'action')    # по payload
+await msg.click(i=0)               # deprecated вариант
+
+# Получить сущности с текстом
+for entity, text in msg.get_entities_text():
+    print(type(entity).__name__, text)</code></pre>
+
+      <h2 id="ch21s2">Button</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">from herokutl.tl.custom import Button
+
+# Inline-кнопки (для ботов)
+Button.inline('Текст', data=b'payload')   # callback
+Button.url('Ссылка', url='https://...')   # открывает URL
+Button.switch_inline('Query', query='', same_peer=False)  # inline-режим
+
+# Reply-кнопки (клавиатура)
+Button.text('Кнопка',
+    resize=None,         # True = сжать клавиатуру
+    single_use=None,     # True = скрыть после нажатия
+    selective=None,      # True = только для конкретных пользователей
+    persistent=None,     # True = кнопки остаются
+    placeholder=None     # текст в поле ввода
+)
+Button.request_location('Отправить гео')
+Button.request_phone('Отправить номер')
+Button.request_poll('Создать опрос', force_quiz=False)
+
+# Сборка клавиатуры
+markup = client.build_reply_markup([
+    [Button.inline('A', b'a'), Button.inline('B', b'b')],
+    [Button.url('GitHub', 'https://github.com')]
+])</code></pre>
+
+      <h2 id="ch21s3">Forward и ChatGetter/SenderGetter</h2>
+      <p><code>msg.forward</code> — объект <code>Forward</code>, наследует <code>ChatGetter</code> + <code>SenderGetter</code>.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code">if msg.forward:
+    fwd = msg.forward
+    print(fwd.sender_id)       # ID оригинального отправителя
+    print(fwd.chat_id)         # ID оригинального канала/чата
+    print(fwd.date)            # дата оригинала
+    sender = await fwd.get_sender()
+    chat = await fwd.get_chat()
+    # Поля оригинального MessageFwdHeader тоже доступны:
+    print(fwd.from_name)       # имя, если скрыт профиль</code></pre>
+      <p><code>ChatGetter</code> и <code>SenderGetter</code> — базовые миксины для <code>Message</code>, <code>Forward</code>, <code>EventCommon</code>. Дают единый интерфейс: <code>.chat_id</code>, <code>.sender_id</code>, <code>.is_private</code>, <code>.is_group</code>, <code>.is_channel</code>, <code>get_chat()</code>, <code>get_sender()</code>, <code>get_input_chat()</code>, <code>get_input_sender()</code>.</p>
+
+      <h2 id="ch21s4">InlineBuilder и InlineResults</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code"># InlineBuilder — в обработчике InlineQuery
+builder = event.builder
+results = [
+    builder.article('Заголовок', description='Описание', text='Текст'),
+    builder.photo(file='image.jpg'),
+    builder.document(file='doc.pdf', title='Документ', description='Описание'),
+    builder.game(short_name='mygame'),
+]
+await event.answer(results)
+
+# inline_query — программный запрос к боту
+from herokutl.tl.custom import InlineResults
+results: InlineResults = await client.inline_query('@bot', 'query text')
+print(results.gallery, results.total)
+await results[0].click(target_chat)  # отправить первый результат в чат
+print(results.results_valid())       # не истёк ли cache_time</code></pre>
+
+      <h2 id="ch21s5">StarGift и payments</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code"># Итерация подарков
+async for gift in client.get_saved_gifts(
+    peer='me',
+    collection_id=None,       # фильтр по коллекции
+    exclude_unsaved=True,     # только сохранённые
+    exclude_unlimited=False,  # исключить неограниченные
+    exclude_upgradable=False, # исключить улучшаемые
+    exclude_nft=False,        # исключить уникальные
+    sort_by_price=True,
+    limit=50,
+):
+    print(gift.gift)           # TypeStarGift
+    print(gift.date)           # datetime
+    print(gift.from_id)        # TypePeer отправителя
+    print(gift.message)        # TypeTextWithEntities | None
+    print(gift.msg_id)         # ID сообщения
+    print(gift.saved_id)       # ID сохранённого подарка
+    print(gift.can_upgrade)    # bool
+    print(gift.upgrade_stars)  # стоимость улучшения в Stars
+    print(gift.convert_stars)  # стоимость конвертации
+    print(gift.transfer_stars) # стоимость передачи
+    print(gift.can_export_at)  # timestamp когда можно экспортировать
+    print(gift.pinned_to_top)  # закреплён в профиле
+
+# Улучшить подарок до уникального NFT
+# owned_gift_id: '-100chatId_savedId' | 'https://t.me/nft/slug' | 'msgId'
+result = await client.upgrade_gift(
+    owned_gift_id='-1001234567890_42',
+    keep_original_details=True,
+    star_count=25
+)
+
+# Или через объект
+await gift.upgrade(keep_original_details=True, star_count=25)</code></pre>
+
+      <h2 id="ch21s6">utils — справочник</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Функция</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>get_peer_id(peer, add_mark=True)</code></td><td>Marked Bot API integer ID</td></tr>
+          <tr><td><code>resolve_id(marked_id)</code></td><td>(raw_id, PeerType) из marked ID</td></tr>
+          <tr><td><code>get_display_name(entity)</code></td><td>«Имя Фамилия» / username / название</td></tr>
+          <tr><td><code>parse_username(text)</code></td><td>(username, is_invite) из ссылки t.me/…</td></tr>
+          <tr><td><code>resolve_invite_link(link)</code></td><td>Парсить invite ссылку → (hash, type, ...)</td></tr>
+          <tr><td><code>get_input_peer(entity)</code></td><td>Преобразовать в InputPeer</td></tr>
+          <tr><td><code>get_input_channel(entity)</code></td><td>→ InputChannel</td></tr>
+          <tr><td><code>get_input_user(entity)</code></td><td>→ InputUser</td></tr>
+          <tr><td><code>get_message_id(msg)</code></td><td>Извлечь int ID из Message / int</td></tr>
+          <tr><td><code>get_input_media(media)</code></td><td>Файл/фото → TypeInputMedia</td></tr>
+          <tr><td><code>split_text(text, entities, limit=4096)</code></td><td>Разбить длинный текст с сохранением форматирования</td></tr>
+          <tr><td><code>sanitize_parse_mode(mode)</code></td><td>Нормализовать строку режима парсинга</td></tr>
+          <tr><td><code>get_extension(media)</code></td><td>Расширение файла из медиа</td></tr>
+          <tr><td><code>is_image(file)</code> / <code>is_video(file)</code> / <code>is_audio(file)</code></td><td>Определить тип по расширению/MIME</td></tr>
+          <tr><td><code>is_list_like(obj)</code></td><td>True если list/tuple/set (не str/bytes)</td></tr>
+          <tr><td><code>chunks(iterable, size=100)</code></td><td>Нарезать на чанки заданного размера</td></tr>
+          <tr><td><code>add_surrogate(text)</code> / <code>del_surrogate(text)</code></td><td>Работа с суррогатными парами Unicode (для offsets)</td></tr>
+          <tr><td><code>pack_bot_file_id(media)</code></td><td>Сформировать Bot File ID</td></tr>
+          <tr><td><code>resolve_bot_file_id(file_id)</code></td><td>Декодировать Bot File ID</td></tr>
+          <tr><td><code>generate_random_long()</code></td><td>Случайный int64 для random_id</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">tl/custom/</span>
+        <span class="tag blue">utils.py</span>
+        <span class="tag green">client/payments.py</span>
+        <span class="tag orange">helpers.py</span>
+      </div>`
+  },
+  {
+    id: 'ch22', section:'herokutl', num:22, icon:'🚨', title:'Ошибки',
+    shortDesc:'RPCError, FloodWait, иерархия, частые ошибки',
+    sub:[
+      {id:'ch22s1',title:'Иерархия RPCError'},
+      {id:'ch22s2',title:'Специфичные ошибки'},
+      {id:'ch22s3',title:'Обработка в практике'},
+      {id:'ch22s4',title:'Не-RPC исключения'},
+    ],
+    content: () => `
+      <div class="chapter-header">
+        <div class="ch-emoji">🚨</div>
+        <div><h1>Ошибки</h1><p class="ch-sub">Полная иерархия RPCError и практика обработки</p></div>
+      </div>
+
+      <h2 id="ch22s1">Иерархия RPCError</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Класс</th><th>HTTP-код</th><th>Когда</th></tr></thead>
+        <tbody>
+          <tr><td><code>RPCError</code></td><td>—</td><td>Базовый класс. Поля: <code>.code</code>, <code>.message</code>, <code>.request</code></td></tr>
+          <tr><td><code>InvalidDCError</code></td><td>303</td><td>Запрос надо повторить на другом DC (library обрабатывает автоматически)</td></tr>
+          <tr><td><code>BadRequestError</code></td><td>400</td><td>Некорректный запрос. Основание большинства конкретных ошибок</td></tr>
+          <tr><td><code>UnauthorizedError</code></td><td>401</td><td>Не авторизован или сессия истекла</td></tr>
+          <tr><td><code>ForbiddenError</code></td><td>403</td><td>Нет прав на действие</td></tr>
+          <tr><td><code>NotFoundError</code></td><td>404</td><td>Объект не найден</td></tr>
+          <tr><td><code>AuthKeyError</code></td><td>406</td><td>Проблема с ключом авторизации</td></tr>
+          <tr><td><code>FloodError</code></td><td>420</td><td>Flood wait. Содержит <code>.seconds</code></td></tr>
+          <tr><td><code>ServerError</code></td><td>500</td><td>Внутренняя ошибка Telegram. Обычно транзиентная</td></tr>
+          <tr><td><code>TimedOutError</code></td><td>503</td><td>Таймаут сервера</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch22s2">Специфичные ошибки</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Ошибка</th><th>Причина</th></tr></thead>
+        <tbody>
+          <tr><td><code>FloodWaitError</code></td><td>Слишком частые запросы. <code>.seconds</code> — время ожидания</td></tr>
+          <tr><td><code>FloodPremiumWaitError</code></td><td>Flood для Premium-функций</td></tr>
+          <tr><td><code>UserBannedInChannelError</code></td><td>Пользователь забанен в канале</td></tr>
+          <tr><td><code>ChatWriteForbiddenError</code></td><td>Нет прав писать в чат</td></tr>
+          <tr><td><code>MessageNotModifiedError</code></td><td>Редактирование без изменений</td></tr>
+          <tr><td><code>MessageIdInvalidError</code></td><td>ID сообщения не существует</td></tr>
+          <tr><td><code>PeerIdInvalidError</code></td><td>Неверный ID чата/пользователя</td></tr>
+          <tr><td><code>UsernameNotOccupiedError</code></td><td>Username не существует</td></tr>
+          <tr><td><code>UsernameInvalidError</code></td><td>Неверный формат username</td></tr>
+          <tr><td><code>SessionPasswordNeededError</code></td><td>Требуется пароль 2FA</td></tr>
+          <tr><td><code>PasswordHashInvalidError</code></td><td>Неверный пароль 2FA</td></tr>
+          <tr><td><code>PhoneCodeInvalidError</code></td><td>Неверный код SMS/TG</td></tr>
+          <tr><td><code>PhoneCodeExpiredError</code></td><td>Код истёк</td></tr>
+          <tr><td><code>PhoneNumberUnoccupiedError</code></td><td>Аккаунта с этим номером нет</td></tr>
+          <tr><td><code>ChannelPrivateError</code></td><td>Канал закрытый, нет доступа</td></tr>
+          <tr><td><code>ChatAdminRequiredError</code></td><td>Нужны права администратора</td></tr>
+          <tr><td><code>UserNotParticipantError</code></td><td>Пользователь не участник чата</td></tr>
+          <tr><td><code>TakeoutInitDelayError</code></td><td>Takeout надо подождать. <code>.seconds</code></td></tr>
+          <tr><td><code>PaymentRequiredError</code></td><td>Нужна оплата Stars (для upgrade_gift)</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch22s3">Обработка в практике</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>import asyncio
+from herokutl import errors
+
+# Базовый шаблон
+try:
+    await client.send_message(chat, text)
+except errors.FloodWaitError as e:
+    await asyncio.sleep(e.seconds)
+except errors.ChatWriteForbiddenError:
+    pass  # нет прав — пропустить
+except errors.MessageNotModifiedError:
+    pass  # при edit — норм
+except errors.UserBannedInChannelError:
+    pass  # забанен
+except errors.RPCError as e:
+    print(f'RPC {e.code}: {e.message}')
+
+# flood_sleep_threshold: если e.seconds <= threshold,
+# библиотека спит автоматически. Иначе — поднимает исключение.
+# По умолчанию threshold = 60.
+
+# ServerError и TimedOutError — транзиентные, retry обычно помогает
+for attempt in range(3):
+    try:
+        result = await client(some_request)
+        break
+    except (errors.ServerError, errors.TimedOutError):
+        await asyncio.sleep(2 ** attempt)</code></pre>
+
+      <h2 id="ch22s4">Не-RPC исключения</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Класс</th><th>Когда</th></tr></thead>
+        <tbody>
+          <tr><td><code>TypeNotFoundError</code></td><td>Неизвестный TL-конструктор в ответе сервера</td></tr>
+          <tr><td><code>AlreadyInConversationError</code></td><td>Попытка открыть второй Conversation в том же чате</td></tr>
+          <tr><td><code>SecurityError</code></td><td>Нарушение MTProto-безопасности</td></tr>
+          <tr><td><code>CdnFileTamperedError</code></td><td>Файл с CDN не прошёл проверку подписи</td></tr>
+          <tr><td><code>InvalidBufferError</code></td><td>Неверный буфер (например, HTTP 404 от сервера)</td></tr>
+          <tr><td><code>MultiError</code></td><td>Несколько ошибок от batch-запроса</td></tr>
+          <tr><td><code>BadMessageError</code></td><td>Неверный MTProto msg_id / seq_no</td></tr>
+          <tr><td><code>events.StopPropagation</code></td><td>Остановить цепочку обработчиков</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="tag-grid" style="margin-top:40px">
+        <span class="tag purple">errors/</span>
+        <span class="tag blue">rpcbaseerrors.py</span>
+        <span class="tag green">errors/common.py</span>
+      </div>`
+  }
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════════
+let current = 'home';
+
+let activeSection = 'heroku';
+
+function buildSidebar() {
+  const nav = document.getElementById('sidebar');
+
+  const tabs = `<div class="section-tabs">
+    <button class="section-tab active" id="tab-heroku" onclick="switchSection('heroku')">🪐 Heroku</button>
+    <button class="section-tab" id="tab-herokutl" onclick="switchSection('herokutl')">📡 herokutl</button>
+  </div>`;
+
+  const items = DOCS.map(ch => {
+    // Home button (no section)
+    if (!ch.section) return `
+    <div class="sidebar-section" data-section="home">
+      <button class="chapter-btn${ch.id==='home'?' active':''}" id="btn-${ch.id}"
+        onclick="navigate('${ch.id}')">
+        <span class="ch-icon">${ch.icon}</span>
+        <span>${ch.title}</span>
+      </button>
+    </div>`;
+
+    return `
+    <div class="sidebar-section" data-section="${ch.section}">
+      <button class="chapter-btn" id="btn-${ch.id}"
+        onclick="navigate('${ch.id}')">
+        <span class="ch-num">${ch.num}.</span>
+        <span class="ch-icon">${ch.icon}</span>
+        <span>${ch.title}</span>
+        ${ch.sub && ch.sub.length ? '<span class="arrow">▶</span>' : ''}
+      </button>
+      ${ch.sub && ch.sub.length ? `
+        <div class="subchapters" id="sub-${ch.id}">
+          ${ch.sub.map(s => `
+            <button class="subchapter-btn" id="btn-${s.id}" onclick="scrollToSection('${s.id}')">
+              <span class="dot"></span>${s.title}
+            </button>`).join('')}
+        </div>` : ''}
+    </div>`;
+  }).join('');
+
+  nav.innerHTML = tabs + items;
+  applySectionFilter();
+}
+
+function switchSection(sec) {
+  activeSection = sec;
+  document.getElementById('tab-heroku').className = 'section-tab' + (sec==='heroku' ? ' active' : '');
+  document.getElementById('tab-herokutl').className = 'section-tab' + (sec==='herokutl' ? ' active-tl' : '');
+  const ind = document.getElementById('section-indicator');
+  if (sec === 'heroku') {
+    ind.textContent = '🪐 Heroku'; ind.className = '';
+    ind.id = 'section-indicator';
+  } else {
+    ind.textContent = '📡 herokutl'; ind.id = 'section-indicator';
+    ind.classList.add('tl');
+  }
+  applySectionFilter();
+}
+
+function applySectionFilter() {
+  document.querySelectorAll('.sidebar-section[data-section]').forEach(el => {
+    const s = el.getAttribute('data-section');
+    if (s === 'home') { el.classList.remove('hidden'); return; }
+    el.classList.toggle('hidden', s !== activeSection);
+  });
+}
+
+function buildContent() {
+  const main = document.getElementById('content');
+  main.innerHTML = DOCS.map(ch => `
+    <div class="chapter" id="chapter-${ch.id}">${ch.content()}</div>`).join('');
+}
+
+function navigate(id) {
+  // Hide all
+  document.querySelectorAll('.chapter').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.chapter-btn').forEach(b => b.classList.remove('active', 'open'));
+  document.querySelectorAll('.subchapters').forEach(s => s.classList.remove('open'));
+  document.querySelectorAll('.subchapter-btn').forEach(b => b.classList.remove('active'));
+
+  // Show target
+  const ch = document.getElementById('chapter-' + id);
+  if (ch) { ch.classList.add('visible'); window.scrollTo(0,0); }
+
+  const btn = document.getElementById('btn-' + id);
+  if (btn) { btn.classList.add('active', 'open'); }
+
+  const sub = document.getElementById('sub-' + id);
+  if (sub) sub.classList.add('open');
+
+  // Auto-switch sidebar section to match chapter
+  const chData = DOCS.find(d => d.id === id);
+  if (chData && chData.section && chData.section !== activeSection) {
+    switchSection(chData.section);
+  }
+
+  current = id;
+  closeSidebar();
+  closeMobileSearch();
+  setTimeout(wrapCodeBlocks, 30);
+}
+
+function showHome() { navigate('home'); }
+
+function navigateTo(id, section) {
+  switchSection(section);
+  navigate(id);
+}
+
+function scrollToSection(subId) {
+  const el = document.getElementById(subId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Highlight sub button
+    document.querySelectorAll('.subchapter-btn').forEach(b => b.classList.remove('active'));
+    const sb = document.getElementById('btn-' + subId);
+    if (sb) sb.classList.add('active');
+  }
+  closeSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════════════════════════════════
+function buildSearchIndex() {
+  const index = [];
+  DOCS.forEach(ch => {
+    if (ch.noNum) return;
+    const html = ch.content();
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    // Split into paragraphs
+    const chunks = text.split(/(?<=\.)(?=\s+[A-ZА-ЯЁ\d])/g).map(s => s.trim()).filter(s => s.length > 20);
+    chunks.forEach(chunk => {
+      index.push({ chId: ch.id, chTitle: ch.title, chIcon: ch.icon, text: chunk.slice(0, 200) });
+    });
+    (ch.sub || []).forEach(s => {
+      index.push({ chId: ch.id, subId: s.id, chTitle: ch.title, chIcon: ch.icon, subTitle: s.title, text: s.title });
+    });
+  });
+  return index;
+}
+
+let searchIndex = [];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOBILE SEARCH TOGGLE
+// ═══════════════════════════════════════════════════════════════════════════════
+let mobileSearchOpen = false;
+
+function toggleMobileSearch() {
+  mobileSearchOpen = !mobileSearchOpen;
+  const bar = document.getElementById('mobile-search-bar');
+  const btn = document.getElementById('search-toggle');
+  const inp = document.getElementById('mobile-search-input');
+  if (mobileSearchOpen) {
+    bar.classList.add('open');
+    btn.textContent = '✕';
+    btn.style.color = 'var(--accent2)';
+    setTimeout(() => inp.focus(), 260);
+  } else {
+    bar.classList.remove('open');
+    btn.textContent = '🔍';
+    btn.style.color = '';
+    inp.value = '';
+    document.getElementById('mobile-search-results').classList.remove('visible');
+    document.getElementById('mobile-search-results').innerHTML = '';
+  }
+}
+
+function closeMobileSearch() {
+  if (!mobileSearchOpen) return;
+  mobileSearchOpen = false;
+  document.getElementById('mobile-search-bar').classList.remove('open');
+  const btn = document.getElementById('search-toggle');
+  btn.textContent = '🔍';
+  btn.style.color = '';
+  document.getElementById('mobile-search-input').value = '';
+  document.getElementById('mobile-search-results').classList.remove('visible');
+  document.getElementById('mobile-search-results').innerHTML = '';
+}
+
+function initSearch() {
+  searchIndex = buildSearchIndex();
+  const inp = document.getElementById('search');
+  const res = document.getElementById('search-results');
+
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim().toLowerCase();
+    if (q.length < 2) { res.classList.remove('visible'); return; }
+
+    const matches = [];
+    const seen = new Set();
+    searchIndex.forEach(item => {
+      if (item.text.toLowerCase().includes(q) || (item.subTitle||'').toLowerCase().includes(q)) {
+        const key = item.chId + (item.subId||'');
+        if (!seen.has(key)) {
+          seen.add(key);
+          matches.push(item);
+        }
+      }
+    });
+
+    if (!matches.length) {
+      res.innerHTML = `<div class="sr-empty">Ничего не найдено по запросу «${inp.value}»</div>`;
+    } else {
+      res.innerHTML = matches.slice(0,10).map(m => {
+        const hi = (str) => str.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), '<mark>$&</mark>');
+        return `<div class="sr-item" onclick="goSearch('${m.chId}','${m.subId||''}')">
+          <div class="sr-title">${m.chIcon} ${hi(m.subTitle || m.chTitle)}</div>
+          ${m.subTitle ? `<div class="sr-ctx">Глава ${DOCS.find(d=>d.id===m.chId)?.num}: ${m.chTitle}</div>` : ''}
+          <div class="sr-match">${hi(m.text.slice(0,100))}…</div>
+        </div>`;
+      }).join('');
+    }
+    res.classList.add('visible');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#search-wrap')) res.classList.remove('visible');
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { res.classList.remove('visible'); inp.blur(); }
+  });
+
+  // ── Mobile search wiring ──────────────────────────────────────────────────
+  const mInp = document.getElementById('mobile-search-input');
+  const mRes = document.getElementById('mobile-search-results');
+
+  mInp.addEventListener('input', () => {
+    const q = mInp.value.trim().toLowerCase();
+    if (q.length < 2) { mRes.classList.remove('visible'); mRes.innerHTML = ''; return; }
+
+    const matches = [];
+    const seen = new Set();
+    searchIndex.forEach(item => {
+      if (item.text.toLowerCase().includes(q) || (item.subTitle||'').toLowerCase().includes(q)) {
+        const key = item.chId + (item.subId||'');
+        if (!seen.has(key)) { seen.add(key); matches.push(item); }
+      }
+    });
+
+    const hi = (str) => str.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), '<mark>$&</mark>');
+
+    if (!matches.length) {
+      mRes.innerHTML = `<div class="sr-empty">Ничего не найдено по запросу «${mInp.value}»</div>`;
+    } else {
+      mRes.innerHTML = matches.slice(0,8).map(m => `
+        <div class="sr-item" onclick="goSearch('${m.chId}','${m.subId||''}'); closeMobileSearch();">
+          <div class="sr-title">${m.chIcon} ${hi(m.subTitle || m.chTitle)}</div>
+          ${m.subTitle ? `<div class="sr-ctx">Глава ${DOCS.find(d=>d.id===m.chId)?.num}: ${m.chTitle}</div>` : ''}
+          <div class="sr-match">${hi(m.text.slice(0,100))}…</div>
+        </div>`).join('');
+    }
+    mRes.classList.add('visible');
+  });
+
+  mInp.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeMobileSearch(); }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#mobile-search-bar') && !e.target.closest('#search-toggle')) {
+      if (mobileSearchOpen) closeMobileSearch();
+    }
+  });
+}
+
+function goSearch(chId, subId) {
+  navigate(chId);
+  document.getElementById('search-results').classList.remove('visible');
+  document.getElementById('search').value = '';
+  if (subId) {
+    setTimeout(() => scrollToSection(subId), 200);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COPY CODE
+// ═══════════════════════════════════════════════════════════════════════════════
+function copyCode(btn) {
+  const code = btn.nextElementSibling;
+  const text = code ? code.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOBILE
+// ═══════════════════════════════════════════════════════════════════════════════
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('visible');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCROLL SPY
+// ═══════════════════════════════════════════════════════════════════════════════
+function initScrollSpy() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        document.querySelectorAll('.subchapter-btn').forEach(b => {
+          b.classList.toggle('active', b.id === 'btn-' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  DOCS.forEach(ch => {
+    (ch.sub||[]).forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WRAP CODE BLOCKS — move copy-btn outside scrollable <pre>
+// ═══════════════════════════════════════════════════════════════════════════════
+function wrapCodeBlocks() {
+  document.querySelectorAll('pre').forEach(pre => {
+    if (pre.closest('.code-wrap')) return;
+    const btn = pre.querySelector('.copy-btn');
+    const lang = pre.getAttribute('data-lang') || '';
+    const wrap = document.createElement('div');
+    wrap.className = 'code-wrap';
+    if (lang) wrap.setAttribute('data-lang', lang);
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    if (btn) { pre.removeChild(btn); wrap.appendChild(btn); }
+    pre.removeAttribute('data-lang');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildSidebar();
+  buildContent();
+  navigate('home');
+  initSearch();
+  setTimeout(initScrollSpy, 300);
+  setTimeout(wrapCodeBlocks, 50);
+
+  // Keyboard shortcut: Ctrl+K / Cmd+K to focus search
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+  });
+});
+</script>
+</body>
+</html>
