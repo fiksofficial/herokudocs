@@ -659,56 +659,59 @@ const DOCS = [
   },
   {
     id: 'ch2', section:'heroku', num:2, icon:'📦', title:'Структура модуля',
-    shortDesc:'Шаблон, атрибуты класса, доступные объекты',
-    sub:[{id:'ch2s1',title:'Минимальный модуль'},{id:'ch2s2',title:'Атрибуты класса'},{id:'ch2s3',title:'Доступные объекты'},{id:'ch2s4',title:'Переопределяемые методы'}],
+    shortDesc:'strings, config, client_ready, on_dlmod и встроенные методы',
+    sub:[
+      {id:'ch2s1',title:'Минимальный модуль'},
+      {id:'ch2s2',title:'Атрибуты класса'},
+      {id:'ch2s3',title:'Доступные объекты'},
+      {id:'ch2s4',title:'Переопределяемые методы'},
+      {id:'ch2s5',title:'Встроенные методы модуля'},
+    ],
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">📦</div>
-        <div><h1>Структура модуля</h1><p class="ch-sub">Как создать модуль с нуля</p></div>
+        <div><h1>Структура модуля</h1><p class="ch-sub">Анатомия Heroku-модуля от заголовка до методов</p></div>
       </div>
 
       <h2 id="ch2s1">Минимальный модуль</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># requires: requests  ← pip-зависимости (опционально)</span>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># meta developer: @username
+# scope: heroku_min 2.0.0
+from .. import loader, utils
 
-<span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> loader, utils
-<span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> Message
+@loader.tds
+class MyMod(loader.Module):
+    """Описание модуля"""
+    strings = {"name": "MyMod"}
 
-
-<span class="op">@</span><span class="dec">loader</span>.<span class="fn">tds</span>
-<span class="kw">class</span> <span class="cls">MyMod</span>(<span class="dec">loader</span>.<span class="cls">Module</span>):
-    <span class="st">"""Краткое описание модуля"""</span>
-
-    strings <span class="op">=</span> {<span class="st">"name"</span>: <span class="st">"MyModule"</span>}
-
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
-    <span class="kw">async def</span> <span class="fn">hellocmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-        <span class="st">"""- Команда приветствия"""</span>
-        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Привет, мир!"</span>)</code></pre>
-      <div class="callout info"><span class="c-icon">💡</span><div>Декоратор <code>@loader.tds</code> включает поддержку переводов. Используйте его всегда — он нужен для корректного отображения в <code>.help</code>.</div></div>
+    @loader.command()
+    async def hellocmd(self, message):
+        """Приветствие"""
+        await utils.answer(message, "Привет!")</code></pre>
 
       <h2 id="ch2s2">Атрибуты класса</h2>
       <div class="table-wrap"><table>
         <thead><tr><th>Атрибут</th><th>Описание</th></tr></thead>
         <tbody>
           <tr><td><code>strings</code></td><td>Словарь строк. Ключ <code>"name"</code> — обязателен</td></tr>
-          <tr><td><code>strings_ru</code></td><td>Переводы на русский (или другой язык)</td></tr>
+          <tr><td><code>strings_ru</code></td><td>Переводы на русский</td></tr>
           <tr><td><code>strings_en</code></td><td>Переводы на английский (резервный язык)</td></tr>
           <tr><td><code>config</code></td><td>Экземпляр <code>ModuleConfig</code> с пользовательскими настройками</td></tr>
         </tbody>
       </table></div>
 
       <h2 id="ch2s3">Доступные объекты экземпляра</h2>
-      <p>После вызова <code>internal_init()</code> доступны следующие атрибуты:</p>
       <div class="table-wrap"><table>
         <thead><tr><th>Атрибут</th><th>Тип</th><th>Описание</th></tr></thead>
         <tbody>
-          <tr><td><code>self._client</code></td><td><code>CustomTelegramClient</code></td><td>MTProto-клиент Telegram</td></tr>
+          <tr><td><code>self._client</code> / <code>self.client</code></td><td><code>CustomTelegramClient</code></td><td>MTProto-клиент (SafeClientProxy для внешних модулей)</td></tr>
           <tr><td><code>self.db</code></td><td><code>Database</code></td><td>Key-value хранилище</td></tr>
           <tr><td><code>self.inline</code></td><td><code>InlineManager</code></td><td>Менеджер inline-бота</td></tr>
           <tr><td><code>self.allmodules</code></td><td><code>Modules</code></td><td>Все загруженные модули</td></tr>
           <tr><td><code>self.tg_id</code></td><td><code>int</code></td><td>Telegram ID текущего пользователя</td></tr>
           <tr><td><code>self.lookup(name)</code></td><td><code>Module | None</code></td><td>Найти другой модуль по имени</td></tr>
-          <tr><td><code>self.get_prefix()</code></td><td><code>str</code></td><td>Текущий префикс команд (обычно <code>.</code>)</td></tr>
+          <tr><td><code>self.get_prefix()</code></td><td><code>str</code></td><td>Текущий префикс (обычно <code>.</code>)</td></tr>
+          <tr><td><code>self.get_prefixes()</code></td><td><code>list[str]</code></td><td>Все активные префиксы</td></tr>
+          <tr><td><code>self.is_external</code></td><td><code>bool</code></td><td><code>True</code> если загружен через <code>.dlmod</code> — клиент завёрнут в SafeClientProxy с проверками безопасности</td></tr>
         </tbody>
       </table></div>
 
@@ -718,78 +721,165 @@ const DOCS = [
         <tbody>
           <tr><td><code>async client_ready()</code></td><td>После подключения клиента, при каждой загрузке</td></tr>
           <tr><td><code>async on_unload()</code></td><td>Перед выгрузкой / перезагрузкой модуля</td></tr>
-          <tr><td><code>async on_dlmod()</code></td><td>При первичной загрузке через <code>.dlmod</code></td></tr>
+          <tr><td><code>async on_dlmod()</code></td><td>При первичной загрузке через <code>.dlmod</code>. Ошибки не прерывают загрузку модуля</td></tr>
           <tr><td><code>def config_complete()</code></td><td>После заполнения <code>self.config</code> из БД</td></tr>
         </tbody>
-      </table></div>`
+      </table></div>
+
+      <h2 id="ch2s5">Встроенные методы модуля</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Работа с БД — короткая запись через имя класса
+self.get("key", default=None)
+self.set("key", value)
+self.pointer("key", default=[])   # живой указатель — изменения сохраняются автоматически
+
+# Вызвать другую команду программно
+await self.invoke("ping", args="текст", message=message)
+await self.invoke("ping", peer="@username")  # отправить в другой чат
+
+# Анимировать сообщение кадрами
+await self.animate(
+    message,
+    frames=["⠋ Загрузка", "⠙ Загрузка", "⠹ Загрузка"],
+    interval=0.3,
+    inline=False,  # True — через inline-бота
+)
+
+# Запросить вступление в канал
+joined = await self.request_join(
+    "@channel_username",
+    reason="Нужен для работы модуля",
+    assure_joined=True,   # LoadError если пользователь отказал
+)
+
+# Импортировать внешнюю библиотеку по URL
+lib = await self.import_lib(
+    "https://example.com/mylib.py",
+    suspend_on_error=True,  # SelfSuspend если не загрузилась
+)</code></pre>
+
+      <div class="callout callout-blue"><code>self.pointer("key", default=[])</code> возвращает живой объект — изменения списков и словарей сохраняются в БД автоматически, без явного вызова <code>self.set()</code>.</div>`
   },
   {
     id: 'ch3', section:'heroku', num:3, icon:'🎨', title:'Декораторы',
-    shortDesc:'@command, @watcher, @loop, @inline_handler и другие',
-    sub:[{id:'ch3s1',title:'@command'},{id:'ch3s2',title:'@watcher'},{id:'ch3s3',title:'@loop'},{id:'ch3s4',title:'@inline_handler'},{id:'ch3s5',title:'@raw_handler'}],
+    shortDesc:'@command, @watcher, @loop, @tag, @raw_handler и другие',
+    sub:[
+      {id:'ch3s1',title:'@command'},
+      {id:'ch3s2',title:'@watcher + @tag'},
+      {id:'ch3s3',title:'@loop'},
+      {id:'ch3s4',title:'@inline_handler / @callback_handler'},
+      {id:'ch3s5',title:'@raw_handler'},
+    ],
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">🎨</div>
-        <div><h1>Декораторы</h1><p class="ch-sub">Как регистрировать команды, события и циклы</p></div>
+        <div><h1>Декораторы</h1><p class="ch-sub">Как регистрировать команды, события, циклы и обработчики</p></div>
       </div>
 
       <h2 id="ch3s1">@loader.command()</h2>
       <p>Отмечает метод как команду бота. Имя: <code>hellocmd</code> → <code>.hello</code> (суффикс <code>cmd</code> удаляется).</p>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
-<span class="kw">async def</span> <span class="fn">greetcmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-    <span class="st">"""- Краткая справка в .help"""</span>
-    args <span class="op">=</span> utils.<span class="fn">get_args_raw</span>(message)
-    <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="kw">f</span><span class="st">"Привет, {args or 'мир'}!"</span>)</code></pre>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@loader.command()
+async def greetcmd(self, message: Message):
+    """- Краткая справка в .help"""  # en doc
+    ru_doc = "- Краткая справка на русском"  # ru локализация
+    args = utils.get_args_raw(message)
+    await utils.answer(message, f"Привет, {args or 'мир'}!")
 
-      <h2 id="ch3s2">@loader.watcher()</h2>
-      <p>Вызывается на <strong>каждое входящее сообщение</strong>. Не блокируйте event loop тяжёлыми операциями.</p>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">watcher</span>()
-<span class="kw">async def</span> <span class="fn">watcher</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-    <span class="kw">if</span> <span class="st">"ключевое слово"</span> <span class="kw">in</span> (message.text <span class="kw">or</span> <span class="st">""</span>).<span class="fn">lower</span>():
-        <span class="kw">await</span> utils.<span class="fn">answer</span>(message, <span class="st">"Нашёл!"</span>)</code></pre>
-      <div class="callout warn"><span class="c-icon">⚠️</span><div>Вотчер срабатывает на каждое сообщение во всех чатах. Всегда добавляйте фильтры и избегайте тяжёлых вычислений без <code>await asyncio.sleep(0)</code>.</div></div>
+# Алиасы для команды
+@loader.command()
+@loader.tag(alias="hi", aliases=["hello", "hey"])
+async def greetcmd(self, message): ...</code></pre>
+
+      <h2 id="ch3s2">@loader.watcher() + @loader.tag()</h2>
+      <p>Вызывается на каждое входящее сообщение. <code>@loader.tag()</code> фильтрует события.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Теги можно передавать прямо в @watcher()
+@loader.watcher("no_commands", "only_messages", out=True)
+async def watcher(self, message: Message):
+    if "ключевое слово" in (message.text or "").lower():
+        await utils.answer(message, "Нашёл!")
+
+# Или использовать @loader.tag() отдельно
+@loader.watcher()
+@loader.tag("only_pm", regex=r"^привет", from_id=123456789)
+async def watcher(self, message: Message): ...</code></pre>
+
+      <div class="table-wrap"><table>
+        <thead><tr><th>Тег</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>no_commands</code></td><td>Игнорировать команды юзербота</td></tr>
+          <tr><td><code>only_commands</code></td><td>Только команды юзербота</td></tr>
+          <tr><td><code>out</code> / <code>in</code></td><td>Только исходящие / входящие</td></tr>
+          <tr><td><code>only_messages</code></td><td>Только сообщения (не события вступления и т.д.)</td></tr>
+          <tr><td><code>editable</code></td><td>Только редактируемые сообщения (не репосты)</td></tr>
+          <tr><td><code>no_media</code> / <code>only_media</code></td><td>Без медиа / только с медиа</td></tr>
+          <tr><td><code>only_photos</code> / <code>only_videos</code> / <code>only_audios</code></td><td>Только фото / видео / аудио</td></tr>
+          <tr><td><code>only_docs</code> / <code>only_stickers</code></td><td>Только документы / стикеры</td></tr>
+          <tr><td><code>only_pm</code> / <code>no_pm</code></td><td>Только ЛС / исключить ЛС</td></tr>
+          <tr><td><code>only_groups</code> / <code>no_groups</code></td><td>Только группы / исключить группы</td></tr>
+          <tr><td><code>only_channels</code> / <code>no_channels</code></td><td>Только каналы / исключить каналы</td></tr>
+          <tr><td><code>no_forwards</code> / <code>only_forwards</code></td><td>Без репостов / только репосты</td></tr>
+          <tr><td><code>no_reply</code> / <code>only_reply</code></td><td>Без реплаев / только реплаи</td></tr>
+          <tr><td><code>mention</code> / <code>no_mention</code></td><td>С упоминанием / без упоминания</td></tr>
+          <tr><td><code>startswith="."</code></td><td>Сообщение начинается с текста</td></tr>
+          <tr><td><code>endswith="!"</code></td><td>Сообщение заканчивается на текст</td></tr>
+          <tr><td><code>contains="слово"</code></td><td>Сообщение содержит текст</td></tr>
+          <tr><td><code>regex=r"^hi"</code></td><td>Сообщение совпадает с регулярным выражением</td></tr>
+          <tr><td><code>filter=func</code></td><td>Произвольная функция-фильтр</td></tr>
+          <tr><td><code>from_id=123</code></td><td>Только от указанного пользователя</td></tr>
+          <tr><td><code>chat_id=-100123</code></td><td>Только в указанном чате</td></tr>
+          <tr><td><code>alias="cmd"</code></td><td>Добавить один алиас команде</td></tr>
+          <tr><td><code>aliases=["a","b"]</code></td><td>Добавить несколько алиасов</td></tr>
+        </tbody>
+      </table></div>
 
       <h2 id="ch3s3">@loader.loop()</h2>
       <p>Создаёт бесконечный фоновый цикл на основе <code>asyncio.Task</code>.</p>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">loop</span>(
-    interval<span class="op">=</span><span class="num">60</span>,       <span class="cm"># Пауза между итерациями (секунды)</span>
-    autostart<span class="op">=</span><span class="kw">True</span>,   <span class="cm"># Запуск сразу при загрузке модуля</span>
-    wait_before<span class="op">=</span><span class="kw">False</span>  <span class="cm"># True = ждать перед первой итерацией</span>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@loader.loop(
+    interval=60,        # Пауза между итерациями (секунды)
+    autostart=True,     # Запуск сразу при загрузке модуля
+    wait_before=False,  # True — пауза перед итерацией, а не после
+    stop_clause="db_key",  # Ключ в БД — цикл остановится когда станет False
 )
-<span class="kw">async def</span> <span class="fn">my_loop</span>(<span class="self">self</span>):
-    <span class="cm"># Ваш код здесь</span>
-    ...
+async def my_loop(self):
+    await self.do_something()
+    # raise StopLoop  # остановить цикл изнутри
 
-<span class="cm"># Управление:</span>
-<span class="self">self</span>.my_loop.<span class="fn">start</span>()    <span class="cm"># Запустить вручную</span>
-<span class="self">self</span>.my_loop.<span class="fn">stop</span>()     <span class="cm"># Остановить</span>
-<span class="self">self</span>.my_loop.status     <span class="cm"># True если работает</span></code></pre>
+# Управление из кода
+self.my_loop.start()
+self.my_loop.stop()
+self.my_loop.status  # bool — запущен ли</code></pre>
 
-      <h2 id="ch3s4">@loader.inline_handler()</h2>
-      <p>Обрабатывает нажатие inline-кнопки. Имя метода должно начинаться с <code>inline__</code>.</p>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
-<span class="kw">async def</span> <span class="fn">inline__mybutton</span>(<span class="self">self</span>, call):
-    <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Кнопка нажата!"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
-    <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Новый текст"</span>)
+      <h2 id="ch3s4">@loader.inline_handler() / @loader.callback_handler()</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># inline_handler — обработчик callback-кнопок в inline.form()
+@loader.inline_handler()
+async def my_callback(self, call: InlineCall):
+    await call.edit("Кнопка нажата!")
+    await call.answer("Pop-up!", show_alert=True)
 
-<span class="cm"># callback_handler — для aiogram-кнопок:</span>
-<span class="op">@</span><span class="dec">loader</span>.<span class="fn">callback_handler</span>()
-<span class="kw">async def</span> <span class="fn">on_click</span>(<span class="self">self</span>, call):
-    <span class="kw">await</span> call.<span class="fn">answer</span>()</code></pre>
+# callback_handler — низкоуровневый обработчик callback_query от бота
+@loader.callback_handler()
+async def raw_callback(self, call):
+    if call.data == b"my_data":
+        await call.answer("OK")</code></pre>
 
       <h2 id="ch3s5">@loader.raw_handler()</h2>
-      <p>Перехватывает сырые TL-события. Предотвращает зависшие хендлеры при выгрузке модуля.</p>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> UpdateUserStatus
+      <p>Обработчик сырых TL-объектов обновлений Telegram. Регистрируется один раз — не оставляет зомби-хендлеров при выгрузке модуля.</p>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>from herokutl.tl import types
 
-<span class="op">@</span><span class="dec">loader</span>.<span class="fn">raw_handler</span>(UpdateUserStatus)
-<span class="kw">async def</span> <span class="fn">handler</span>(<span class="self">self</span>, update):
-    <span class="cm"># update — сырой TLObject</span>
-    ...</code></pre>`
+@loader.raw_handler(types.UpdateBotCallbackQuery, types.UpdateInlineBotCallbackQuery)
+async def handle_raw(self, update):
+    # update — объект TL-типа напрямую
+    print(update.stringify())</code></pre>
+
+      <div class="callout warn"><span class="c-icon">⚠️</span><div>Не объявляй <code>raw_handler</code> динамически — декоратор работает только при статическом объявлении в теле класса.</div></div>`
   },
   {
     id: 'ch4', section:'heroku', num:4, icon:'⚙️', title:'Конфигурация',
-    shortDesc:'ModuleConfig, ConfigValue, все валидаторы',
-    sub:[{id:'ch4s1',title:'Объявление конфига'},{id:'ch4s2',title:'Использование значений'},{id:'ch4s3',title:'Все валидаторы'}],
+    shortDesc:'ModuleConfig, ConfigValue, on_change, folder и все валидаторы',
+    sub:[
+      {id:'ch4s1',title:'Объявление конфига'},
+      {id:'ch4s2',title:'Использование значений'},
+      {id:'ch4s3',title:'Все валидаторы'},
+    ],
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">⚙️</div>
@@ -798,29 +888,44 @@ const DOCS = [
       <p>Heroku автоматически предоставляет UI для редактирования настроек модуля. Объявите их через <code>ModuleConfig</code> в <code>__init__</code>.</p>
 
       <h2 id="ch4s1">Объявление конфига</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
-    <span class="self">self</span>.config <span class="op">=</span> loader.<span class="cls">ModuleConfig</span>(
-        loader.<span class="cls">ConfigValue</span>(
-            <span class="st">"api_key"</span>,           <span class="cm"># Ключ в БД</span>
-            <span class="st">"default_value"</span>,     <span class="cm"># Значение по умолчанию</span>
-            <span class="st">"Описание для пользователя"</span>,
-            validator<span class="op">=</span>loader.validators.<span class="cls">String</span>(),
-            on_change<span class="op">=</span><span class="self">self</span>._on_api_key_change,  <span class="cm"># callback при изменении</span>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>def __init__(self):
+    self.config = loader.ModuleConfig(
+        loader.ConfigValue(
+            "api_key",                        # Ключ в БД
+            "default_value",                  # Значение по умолчанию
+            "Описание для пользователя",
+            validator=loader.validators.String(),
+            on_change=self._on_api_key_change,  # callback при изменении
+            folder="Основное",                # группировка в UI (новое)
         ),
-        loader.<span class="cls">ConfigValue</span>(
-            <span class="st">"max_count"</span>,
-            <span class="num">10</span>,
-            <span class="kw">lambda</span>: <span class="self">self</span>.strings[<span class="st">"cfg_max_count"</span>],  <span class="cm"># Локализованное описание</span>
-            validator<span class="op">=</span>loader.validators.<span class="cls">Integer</span>(minimum<span class="op">=</span><span class="num">1</span>, maximum<span class="op">=</span><span class="num">100</span>),
+        loader.ConfigValue(
+            "max_count",
+            10,
+            lambda: self.strings["cfg_max_count"],  # Локализованное описание
+            validator=loader.validators.Integer(minimum=1, maximum=100),
         ),
-    )</code></pre>
+        loader.ConfigValue(
+            "token",
+            "",
+            "Секретный токен",
+            validator=loader.validators.Hidden(),  # скрыто в UI
+            folder="Безопасность",
+        ),
+    )
+
+# on_change — синхронный или асинхронный, оба варианта работают
+async def _on_api_key_change(self):
+    self._api_client = MyAPI(self.config["api_key"])</code></pre>
 
       <h2 id="ch4s2">Использование значений</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># Читать — через словарный доступ</span>
-value <span class="op">=</span> <span class="self">self</span>.config[<span class="st">"api_key"</span>]
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Читать — через словарный доступ
+value = self.config["api_key"]
 
-<span class="cm"># Значение всегда актуально — Heroku обновляет словарь при изменении</span>
-<span class="cm"># Callback on_change вызывается синхронно или асинхронно — оба варианта работают</span></code></pre>
+# Изменить программно (вызовет on_change)
+self.config["api_key"] = "new_value"
+
+# Изменить без ValidationError (для внутренних нужд)
+self.config.set_no_raise("api_key", bad_value)</code></pre>
 
       <h2 id="ch4s3">Все валидаторы</h2>
       <div class="table-wrap"><table>
@@ -830,19 +935,27 @@ value <span class="op">=</span> <span class="self">self</span>.config[<span clas
           <tr><td><code>Integer()</code></td><td><code>minimum</code>, <code>maximum</code></td><td>Целое число</td></tr>
           <tr><td><code>Float()</code></td><td><code>minimum</code>, <code>maximum</code></td><td>Дробное число</td></tr>
           <tr><td><code>String()</code></td><td><code>min_len</code>, <code>max_len</code></td><td>Строка</td></tr>
-          <tr><td><code>Choice()</code></td><td><code>possible_values: list</code></td><td>Один из вариантов</td></tr>
-          <tr><td><code>MultiChoice()</code></td><td><code>possible_values: list</code></td><td>Несколько вариантов</td></tr>
+          <tr><td><code>Choice(possible_values)</code></td><td><code>possible_values: list</code></td><td>Один из вариантов</td></tr>
+          <tr><td><code>MultiChoice(possible_values)</code></td><td><code>possible_values: list</code></td><td>Несколько вариантов</td></tr>
           <tr><td><code>Series()</code></td><td><code>validator</code>, <code>min_len</code>, <code>max_len</code>, <code>fixed_len</code></td><td>Список значений</td></tr>
-          <tr><td><code>RegExp()</code></td><td><code>pattern</code></td><td>Строка по регулярному выражению</td></tr>
+          <tr><td><code>RegExp(regex)</code></td><td><code>regex</code>, <code>flags</code></td><td>Строка по регулярному выражению</td></tr>
           <tr><td><code>Link()</code></td><td>—</td><td>URL-адрес</td></tr>
-          <tr><td><code>TelegramID()</code></td><td>—</td><td>Telegram ID (целое число)</td></tr>
-          <tr><td><code>Hidden()</code></td><td><code>inner_validator</code></td><td>Скрытое поле (пароли, ключи API)</td></tr>
-          <tr><td><code>Emoji()</code></td><td>—</td><td>Одиночный эмодзи</td></tr>
-          <tr><td><code>Union()</code></td><td><code>*validators</code></td><td>Любой из перечисленных валидаторов</td></tr>
-          <tr><td><code>NoneType()</code></td><td>—</td><td>Разрешает значение <code>None</code></td></tr>
-          <tr><td><code>EntityLike()</code></td><td>—</td><td>Username, ID, ссылка на Telegram-сущность</td></tr>
+          <tr><td><code>TelegramID()</code></td><td>—</td><td>Telegram ID — принимает числа, в том числе с префиксом <code>-100</code></td></tr>
+          <tr><td><code>Hidden(validator?)</code></td><td><code>validator</code> (опц.)</td><td>Скрытое поле (пароли, ключи API). Оборачивает другой валидатор</td></tr>
+          <tr><td><code>Emoji()</code></td><td><code>length</code>, <code>min_len</code>, <code>max_len</code></td><td>Один или несколько эмодзи</td></tr>
+          <tr><td><code>Union(*validators)</code></td><td><code>*validators</code></td><td>Принимает значение, которое проходит хотя бы один из валидаторов</td></tr>
+          <tr><td><code>NoneType()</code></td><td>—</td><td>Разрешает пустое / None значение</td></tr>
+          <tr><td><code>EntityLike()</code></td><td>—</td><td>Username (<code>@name</code>), Telegram ID или <code>t.me/</code>-ссылка — нормализует к <code>@username</code> или <code>int</code></td></tr>
+          <tr><td><code>RandomLink()</code></td><td>—</td><td>Список URL-ссылок; при обращении <code>str()</code> возвращает случайную</td></tr>
         </tbody>
-      </table></div>`
+      </table></div>
+
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Примеры сложных валидаторов
+loader.validators.Series(validator=loader.validators.TelegramID(), min_len=1)
+loader.validators.Union(loader.validators.Integer(), loader.validators.NoneType())
+loader.validators.Hidden(loader.validators.String(min_len=10))
+loader.validators.Emoji(length=1)   # ровно один эмодзи
+loader.validators.RandomLink()      # список ссылок, случайная при обращении</code></pre>`
   },
   {
     id: 'ch5', section:'heroku', num:5, icon:'🗄️', title:'База данных',
@@ -940,8 +1053,15 @@ chat, is_new <span class="op">=</span> <span class="kw">await</span> utils.<span
   },
   {
     id: 'ch7', section:'heroku', num:7, icon:'🤖', title:'Inline-бот',
-    shortDesc:'Формы, кнопки, галереи, InlineCall',
-    sub:[{id:'ch7s1',title:'Формы с кнопками'},{id:'ch7s2',title:'Галереи'},{id:'ch7s3',title:'Типы action'},{id:'ch7s4',title:'Методы InlineCall'}],
+    shortDesc:'Формы, кнопки, галереи, InlineCall, все типы кнопок',
+    sub:[
+      {id:'ch7s1',title:'Формы с кнопками'},
+      {id:'ch7s2',title:'Все типы кнопок'},
+      {id:'ch7s3',title:'Медиа в формах'},
+      {id:'ch7s4',title:'Галереи'},
+      {id:'ch7s5',title:'Типы action'},
+      {id:'ch7s6',title:'Методы InlineCall'},
+    ],
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">🤖</div>
@@ -950,53 +1070,111 @@ chat, is_new <span class="op">=</span> <span class="kw">await</span> utils.<span
       <p>Heroku создаёт встроенного Telegram-бота для интерактивных форм. Доступ через <code>self.inline</code>.</p>
 
       <h2 id="ch7s1">Формы с кнопками</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">await</span> <span class="self">self</span>.inline.<span class="fn">form</span>(
-    message<span class="op">=</span>message,
-    text<span class="op">=</span><span class="st">"Выберите действие:"</span>,
-    reply_markup<span class="op">=</span>[[
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>await self.inline.form(
+    message=message,
+    text="Выберите действие:",
+    reply_markup=[[
         {
-            <span class="st">"text"</span>: <span class="st">"✅ Подтвердить"</span>,
-            <span class="st">"callback"</span>: <span class="self">self</span>.confirm_callback,
-            <span class="st">"args"</span>: (<span class="kw">True</span>,),
+            "text": "✅ Подтвердить",
+            "callback": self.confirm_handler,
+            "args": (True,),      # позиционные аргументы
+            "kwargs": {},         # именованные аргументы
         },
-        {
-            <span class="st">"text"</span>: <span class="st">"❌ Отмена"</span>,
-            <span class="st">"action"</span>: <span class="st">"close"</span>,
-        }
-    ]]
+        {"text": "❌ Отмена", "action": "close"},
+    ]],
+    force_me=False,          # только владелец может нажимать кнопки
+    always_allow=[123456],   # дополнительные разрешённые user_id
+    silent=True,             # без сообщения "Opening form..."
+    ttl=300,                 # авто-выгрузка через N секунд
+    on_unload=self._cleanup, # callback при закрытии формы
 )
 
-<span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
-<span class="kw">async def</span> <span class="fn">confirm_callback</span>(<span class="self">self</span>, call, confirmed: <span class="cls">bool</span>):
-    <span class="kw">if</span> confirmed:
-        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Подтверждено!"</span>)
-    <span class="kw">else</span>:
-        <span class="kw">await</span> call.<span class="fn">delete</span>()</code></pre>
+@loader.inline_handler()
+async def confirm_handler(self, call: InlineCall, confirmed: bool):
+    await call.edit("Подтверждено!" if confirmed else "Отменено!")</code></pre>
 
-      <h2 id="ch7s2">Галереи</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">await</span> <span class="self">self</span>.inline.<span class="fn">gallery</span>(
-    message<span class="op">=</span>message,
-    next_handler<span class="op">=</span><span class="self">self</span>.photo_generator,  <span class="cm"># async def → str (URL фото)</span>
-    caption<span class="op">=</span><span class="kw">lambda</span>: <span class="st">"Фото из галереи"</span>,
-    preload<span class="op">=</span><span class="num">3</span>,
+      <h2 id="ch7s2">Все типы кнопок</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Ключ</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>"callback": func</code></td><td>Вызвать метод при нажатии. Дополнительно: <code>"args"</code>, <code>"kwargs"</code></td></tr>
+          <tr><td><code>"url": "https://..."</code></td><td>Кнопка-ссылка</td></tr>
+          <tr><td><code>"action": "close"/"unload"/"answer"</code></td><td>Встроенное действие (см. ниже)</td></tr>
+          <tr><td><code>"input": "Placeholder..."</code></td><td>Открыть поле ввода inline-запроса. Нужен <code>"handler": func</code></td></tr>
+          <tr><td><code>"web_app": "https://..."</code></td><td>Открыть Web App по URL</td></tr>
+          <tr><td><code>"copy": "текст"</code></td><td>Скопировать текст в буфер обмена</td></tr>
+          <tr><td><code>"data": "raw"</code></td><td>Сырой callback_data (без регистрации хендлера)</td></tr>
+        </tbody>
+      </table></div>
+      <p>Дополнительные поля для любой кнопки:</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Поле</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>"style": "primary"</code></td><td>Стиль кнопки: <code>primary</code>, <code>secondary</code>, <code>destructive</code> (где поддерживается)</td></tr>
+          <tr><td><code>"emoji_id": "5..."</code></td><td>ID кастомного emoji для иконки кнопки</td></tr>
+          <tr><td><code>"force_me": True</code></td><td>Только владелец может нажать эту кнопку</td></tr>
+          <tr><td><code>"disable_security": True</code></td><td>Отключить проверки безопасности для кнопки</td></tr>
+          <tr><td><code>"always_allow": [id1, id2]</code></td><td>Дополнительные разрешённые user_id для кнопки</td></tr>
+        </tbody>
+      </table></div>
+
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># input-кнопка — открывает поле ввода, handler получает (call, query: str)
+{"text": "🔑 Введи ключ", "input": "Ключ API...", "handler": self._save_key}
+
+@loader.inline_handler()
+async def _save_key(self, call: InlineCall, query: str):
+    self.config["api_key"] = query.strip()
+    await call.edit("✅ Ключ сохранён!")
+
+# web_app кнопка
+{"text": "🌐 Открыть", "web_app": "https://myapp.example.com"}
+
+# copy кнопка
+{"text": "📋 Скопировать", "copy": "some text to copy"}
+
+# Кнопка с кастомным emoji и стилем
+{"text": "🗑️ Удалить", "callback": self._del, "style": "destructive", "emoji_id": "5447644880824181073"}</code></pre>
+
+      <h2 id="ch7s3">Медиа в формах</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>await self.inline.form(
+    message=message,
+    text="Форма с фото:",
+    reply_markup=[[{"text": "OK", "action": "close"}]],
+    photo="https://example.com/image.jpg",   # или: gif=, video=, file=
+    audio={"url": "https://example.com/audio.mp3", "title": "Track"},
+    location=(55.7498, 48.7424),  # (lat, lon) — text должен быть ""
 )</code></pre>
 
-      <h2 id="ch7s3">Типы action</h2>
+      <h2 id="ch7s4">Галереи</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>await self.inline.gallery(
+    message=message,
+    next_handler=self.photo_generator,  # async def → str (URL фото)
+    caption=lambda: "Фото из галереи",
+    preload=3,
+)
+
+async def photo_generator(self) -> str:
+    # вызывается при каждом нажатии "→"
+    return "https://example.com/photo.jpg"</code></pre>
+
+      <h2 id="ch7s5">Типы action</h2>
       <div class="table-wrap"><table>
         <thead><tr><th>action</th><th>Поведение</th></tr></thead>
         <tbody>
           <tr><td><code>"close"</code></td><td>Закрыть форму, удалить сообщение</td></tr>
           <tr><td><code>"unload"</code></td><td>Убрать обработчик, не удаляя сообщение</td></tr>
-          <tr><td><code>"answer"</code></td><td>Показать pop-up (нужен ключ <code>"text"</code>)</td></tr>
+          <tr><td><code>"answer"</code></td><td>Показать pop-up (нужен ключ <code>"message"</code>, опц. <code>"show_alert": True</code>)</td></tr>
         </tbody>
       </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>{"text": "ℹ️ Инфо", "action": "answer", "message": "Это подсказка", "show_alert": True}</code></pre>
 
-      <h2 id="ch7s4">Методы InlineCall</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="kw">async def</span> <span class="fn">my_handler</span>(<span class="self">self</span>, call):
-    <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="st">"Новый текст"</span>, reply_markup<span class="op">=</span>[...])
-    <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Pop-up"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
-    <span class="kw">await</span> call.<span class="fn">delete</span>()     <span class="cm"># Удалить сообщение формы</span>
-    <span class="kw">await</span> call.<span class="fn">unload</span>()    <span class="cm"># Убрать хендлер, оставить сообщение</span></code></pre>`
+      <h2 id="ch7s6">Методы InlineCall</h2>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code>@loader.inline_handler()
+async def my_handler(self, call: InlineCall):
+    await call.edit("Новый текст", reply_markup=[...])
+    await call.answer("Pop-up", show_alert=True)
+    await call.delete()   # Удалить сообщение формы
+    await call.unload()   # Убрать хендлер, оставить сообщение</code></pre>`
   },
   {
     id: 'ch8', section:'heroku', num:8, icon:'🔐', title:'Безопасность',
@@ -1101,97 +1279,129 @@ raw <span class="op">=</span> <span class="self">self</span>.strings[<span class
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">📋</div>
-        <div><h1>Полный пример</h1><p class="ch-sub">Модуль с командами, конфигом, inline-формой и циклом</p></div>
+        <div><h1>Полный пример</h1><p class="ch-sub">Модуль с командами, конфигом, inline-формой, циклом и новыми паттернами</p></div>
       </div>
       <div class="callout ok"><span class="c-icon">✅</span><div>Этот пример можно скопировать и использовать как шаблон для нового модуля.</div></div>
 
       <h2 id="ch11s1">Исходный код</h2>
-      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code><span class="cm"># requires: aiohttp</span>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># meta developer: @myusername
+# requires: aiohttp
 
-<span class="kw">from</span> <span class="dec">..</span> <span class="kw">import</span> loader, utils
-<span class="kw">from</span> <span class="dec">herokutl</span>.tl.types <span class="kw">import</span> Message
-<span class="kw">import</span> aiohttp
+from .. import loader, utils
+from herokutl.tl.types import Message
+import aiohttp
 
 
-<span class="op">@</span><span class="dec">loader</span>.<span class="fn">tds</span>
-<span class="kw">class</span> <span class="cls">ExampleMod</span>(<span class="dec">loader</span>.<span class="cls">Module</span>):
-    <span class="st">"""Пример модуля с основными паттернами"""</span>
+@loader.tds
+class ExampleMod(loader.Module):
+    """Пример модуля с основными паттернами"""
 
-    strings <span class="op">=</span> {
-        <span class="st">"name"</span>: <span class="st">"Example"</span>,
-        <span class="st">"no_args"</span>: <span class="st">"❌ Укажите аргументы"</span>,
-        <span class="st">"result"</span>: <span class="st">"✅ Результат: &lt;code&gt;{}&lt;/code&gt;"</span>,
-        <span class="st">"counter"</span>: <span class="st">"🔢 Счётчик: &lt;b&gt;{}&lt;/b&gt;"</span>,
+    strings = {
+        "name": "Example",
+        "_cls_doc": "Пример модуля с основными паттернами",
+        "no_args":  "❌ Укажите аргументы",
+        "result":   "✅ Результат: &lt;code&gt;{}&lt;/code&gt;",
+        "counter":  "🔢 Счётчик: &lt;b&gt;{}&lt;/b&gt;",
+        "cfg_prefix": "Текст перед результатом",
     }
 
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
-        <span class="self">self</span>.config <span class="op">=</span> loader.<span class="cls">ModuleConfig</span>(
-            loader.<span class="cls">ConfigValue</span>(
-                <span class="st">"prefix_text"</span>,
-                <span class="st">"Result"</span>,
-                <span class="st">"Текст перед результатом"</span>,
-                validator<span class="op">=</span>loader.validators.<span class="cls">String</span>(),
+    strings_ru = {
+        "no_args":  "❌ Укажи аргументы",
+        "result":   "✅ Результат: &lt;code&gt;{}&lt;/code&gt;",
+        "cfg_prefix": "Текст перед результатом",
+    }
+
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "prefix_text",
+                "Result",
+                lambda: self.strings["cfg_prefix"],
+                validator=loader.validators.String(max_len=50),
+                on_change=self._on_prefix_change,
+                folder="Основное",
             ),
-            loader.<span class="cls">ConfigValue</span>(
-                <span class="st">"auto_count"</span>,
-                <span class="kw">True</span>,
-                <span class="st">"Считать все сообщения"</span>,
-                validator<span class="op">=</span>loader.validators.<span class="cls">Boolean</span>(),
+            loader.ConfigValue(
+                "auto_count",
+                True,
+                "Считать все сообщения",
+                validator=loader.validators.Boolean(),
+            ),
+            loader.ConfigValue(
+                "secret_key",
+                "",
+                "Секретный ключ API",
+                validator=loader.validators.Hidden(loader.validators.String(min_len=8)),
+                folder="Безопасность",
             ),
         )
 
-    <span class="kw">async def</span> <span class="fn">client_ready</span>(<span class="self">self</span>):
-        <span class="kw">if not</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>):
-            <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
+    async def client_ready(self):
+        # self.get/set — короткая запись через имя класса
+        if not self.get("counter"):
+            self.set("counter", 0)
 
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
-    <span class="kw">async def</span> <span class="fn">echocmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-        <span class="st">"""- Повторить аргументы"""</span>
-        args <span class="op">=</span> utils.<span class="fn">get_args_raw</span>(message)
-        <span class="kw">if not</span> args:
-            <span class="kw">return await</span> utils.<span class="fn">answer</span>(message, <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"no_args"</span>))
-        <span class="kw">await</span> utils.<span class="fn">answer</span>(
-            message,
-            <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"result"</span>).<span class="fn">format</span>(
-                <span class="kw">f</span><span class="st">"{self.config['prefix_text']}: {args}"</span>
-            )
+    async def on_dlmod(self):
+        # Вызывается только при первой загрузке через .dlmod
+        await self._client.send_message("me", "Модуль Example загружен!")
+
+    def _on_prefix_change(self):
+        # Синхронный callback при изменении конфига
+        self._prefix = self.config["prefix_text"]
+
+    @loader.command()
+    async def examplecmd(self, message: Message):
+        """Пример команды с inline-формой"""
+        args = utils.get_args_raw(message)
+        if not args:
+            return await utils.answer(message, self.strings["no_args"])
+
+        await self.inline.form(
+            message=message,
+            text=self.strings["result"].format(
+                f"{self.config['prefix_text']}: {args}"
+            ),
+            reply_markup=[
+                [
+                    {"text": "📋 Скопировать", "copy": args},
+                    {"text": "🔄 Повторить", "callback": self._cb_repeat, "args": (args,)},
+                ],
+                [{"text": "❌ Закрыть", "action": "close"}],
+            ],
+            silent=True,
         )
 
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">command</span>()
-    <span class="kw">async def</span> <span class="fn">countercmd</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-        <span class="st">"""- Показать счётчик"""</span>
-        count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
-        <span class="kw">await</span> utils.<span class="fn">answer</span>(
+    @loader.inline_handler()
+    async def _cb_repeat(self, call, text: str):
+        await call.answer(f"Повтор: {text}", show_alert=True)
+
+    @loader.watcher("only_messages", "no_commands", "out")
+    async def watcher(self, message: Message):
+        if self.config["auto_count"]:
+            cnt = self.get("counter", 0) + 1
+            self.set("counter", cnt)
+
+    @loader.command()
+    async def countcmd(self, message: Message):
+        """Показать счётчик сообщений"""
+        await utils.answer(
             message,
-            <span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(count),
-            reply_markup<span class="op">=</span>[[
-                {<span class="st">"text"</span>: <span class="st">"➕ +1"</span>, <span class="st">"callback"</span>: <span class="self">self</span>._inc},
-                {<span class="st">"text"</span>: <span class="st">"🔄 Сброс"</span>, <span class="st">"callback"</span>: <span class="self">self</span>._reset},
-            ]]
+            self.strings["counter"].format(self.get("counter", 0)),
         )
 
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
-    <span class="kw">async def</span> <span class="fn">_inc</span>(<span class="self">self</span>, call):
-        count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>) <span class="op">+</span> <span class="num">1</span>
-        <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, count)
-        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(count))
+    @loader.loop(interval=300, autostart=True)
+    async def cleanup_loop(self):
+        # Периодически сбрасывать счётчик (каждые 5 минут)
+        self.set("counter", 0)
 
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">inline_handler</span>()
-    <span class="kw">async def</span> <span class="fn">_reset</span>(<span class="self">self</span>, call):
-        <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>)
-        <span class="kw">await</span> call.<span class="fn">answer</span>(<span class="st">"Счётчик сброшен!"</span>, show_alert<span class="op">=</span><span class="kw">True</span>)
-        <span class="kw">await</span> call.<span class="fn">edit</span>(<span class="self">self</span>.<span class="fn">strings</span>(<span class="st">"counter"</span>).<span class="fn">format</span>(<span class="num">0</span>))
-
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">watcher</span>()
-    <span class="kw">async def</span> <span class="fn">watcher</span>(<span class="self">self</span>, message: <span class="cls">Message</span>):
-        <span class="kw">if</span> <span class="self">self</span>.config[<span class="st">"auto_count"</span>] <span class="kw">and</span> <span class="fn">getattr</span>(message, <span class="st">"out"</span>, <span class="kw">False</span>):
-            count <span class="op">=</span> <span class="self">self</span>.db.<span class="fn">get</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, <span class="num">0</span>) <span class="op">+</span> <span class="num">1</span>
-            <span class="self">self</span>.db.<span class="fn">set</span>(<span class="st">"Example"</span>, <span class="st">"counter"</span>, count)
-
-    <span class="op">@</span><span class="dec">loader</span>.<span class="fn">loop</span>(interval<span class="op">=</span><span class="num">3600</span>, autostart<span class="op">=</span><span class="kw">True</span>)
-    <span class="kw">async def</span> <span class="fn">hourly_task</span>(<span class="self">self</span>):
-        <span class="cm"># Выполняется каждый час</span>
-        ...</code></pre>`
+    @loader.command()
+    async def animcmd(self, message: Message):
+        """Анимация загрузки"""
+        await self.animate(
+            message,
+            frames=["⠋ Загрузка", "⠙ Загрузка", "⠹ Загрузка", "⠸ Загрузка"],
+            interval=0.2,
+        )</code></pre>`
   },
   {
     id: 'ch12', section:'heroku', num:12, icon:'💡', title:'Паттерны',
@@ -1286,12 +1496,17 @@ logger.<span class="fn">exception</span>(<span class="st">"Ошибка с trace
   },
   {
     id: 'ch14', section:'heroku', num:14, icon:'📚', title:'Справочник API',
-    shortDesc:'Таблицы всех функций loader.* и utils.*',
-    sub:[{id:'ch14s1',title:'loader.*'},{id:'ch14s2',title:'utils.*'}],
+    shortDesc:'Таблицы всех функций loader.*, utils.*, Module и Library',
+    sub:[
+      {id:'ch14s1',title:'loader.*'},
+      {id:'ch14s2',title:'Module — методы'},
+      {id:'ch14s3',title:'Library — методы'},
+      {id:'ch14s4',title:'utils.*'},
+    ],
     content: () => `
       <div class="chapter-header">
         <div class="ch-emoji">📚</div>
-        <div><h1>Справочник API</h1><p class="ch-sub">Полные таблицы loader.* и utils.*</p></div>
+        <div><h1>Справочник API</h1><p class="ch-sub">Полные таблицы loader.*, utils.*, Module и Library</p></div>
       </div>
 
       <h2 id="ch14s1">loader.*</h2>
@@ -1299,23 +1514,75 @@ logger.<span class="fn">exception</span>(<span class="st">"Ошибка с trace
         <thead><tr><th>Имя</th><th>Назначение</th></tr></thead>
         <tbody>
           <tr><td><code>loader.Module</code></td><td>Базовый класс модуля</td></tr>
+          <tr><td><code>loader.Library</code></td><td>Базовый класс внешней библиотеки</td></tr>
           <tr><td><code>loader.ModuleConfig</code></td><td>Конфигурация модуля</td></tr>
-          <tr><td><code>loader.ConfigValue</code></td><td>Одно значение конфигурации</td></tr>
+          <tr><td><code>loader.LibraryConfig</code></td><td>Алиас <code>ModuleConfig</code> для библиотек</td></tr>
+          <tr><td><code>loader.ConfigValue(option, default, doc, validator?, on_change?, folder?)</code></td><td>Одно значение конфигурации</td></tr>
           <tr><td><code>loader.tds</code></td><td>Декоратор класса для переводов (обязателен)</td></tr>
           <tr><td><code>loader.command()</code></td><td>Декоратор команды</td></tr>
-          <tr><td><code>loader.watcher()</code></td><td>Декоратор вотчера</td></tr>
-          <tr><td><code>loader.loop(interval, autostart, wait_before)</code></td><td>Декоратор фонового цикла</td></tr>
-          <tr><td><code>loader.inline_handler()</code></td><td>Декоратор inline-обработчика</td></tr>
-          <tr><td><code>loader.callback_handler()</code></td><td>Декоратор callback-обработчика</td></tr>
-          <tr><td><code>loader.raw_handler(*types)</code></td><td>Декоратор raw TL-обработчика</td></tr>
-          <tr><td><code>loader.validators</code></td><td>Модуль с валидаторами</td></tr>
+          <tr><td><code>loader.watcher(*tags, **kwarg_tags)</code></td><td>Декоратор вотчера с опциональными тегами</td></tr>
+          <tr><td><code>loader.tag(*tags, **kwarg_tags)</code></td><td>Декоратор тегов для фильтрации вотчера/команды</td></tr>
+          <tr><td><code>loader.loop(interval, autostart, wait_before, stop_clause)</code></td><td>Декоратор фонового цикла → <code>InfiniteLoop</code></td></tr>
+          <tr><td><code>loader.inline_handler()</code></td><td>Декоратор inline-обработчика (callback кнопок)</td></tr>
+          <tr><td><code>loader.callback_handler()</code></td><td>Декоратор низкоуровневого callback-обработчика</td></tr>
+          <tr><td><code>loader.raw_handler(*tl_types)</code></td><td>Декоратор raw TL-обработчика — без зомби-хендлеров</td></tr>
+          <tr><td><code>loader.ratelimit</code></td><td>Более строгий rate limit для команды</td></tr>
+          <tr><td><code>loader.validators</code></td><td>Модуль с валидаторами конфига</td></tr>
           <tr><td><code>loader.owner</code></td><td>Уровень безопасности: только владелец</td></tr>
           <tr><td><code>loader.group_admin</code></td><td>Уровень: администратор группы</td></tr>
           <tr><td><code>loader.unrestricted</code></td><td>Уровень: все пользователи</td></tr>
+          <tr><td><code>loader.inline_everyone</code></td><td>Уровень: все могут нажимать inline-кнопки</td></tr>
+          <tr><td><code>loader.LoadError(msg)</code></td><td>Исключение — прервать загрузку с сообщением пользователю</td></tr>
+          <tr><td><code>loader.SelfUnload(msg?)</code></td><td>Исключение — тихо выгрузить модуль</td></tr>
+          <tr><td><code>loader.SelfSuspend(msg?)</code></td><td>Исключение — приостановить модуль (команды/вотчер не регистрируются, восстановится после перезапуска)</td></tr>
+          <tr><td><code>loader.StopLoop</code></td><td>Исключение — остановить текущий <code>@loop</code> цикл</td></tr>
         </tbody>
       </table></div>
 
-      <h2 id="ch14s2">utils.*</h2>
+      <h2 id="ch14s2">Module — встроенные методы</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Метод</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>self.get(key, default=None)</code></td><td>Читать из БД (ключ = имя класса)</td></tr>
+          <tr><td><code>self.set(key, value)</code></td><td>Записать в БД</td></tr>
+          <tr><td><code>self.pointer(key, default=None)</code></td><td>Живой указатель на список/словарь — изменения сохраняются автоматически</td></tr>
+          <tr><td><code>await self.invoke(command, args?, message?, peer?, edit?)</code></td><td>Программно вызвать другую команду</td></tr>
+          <tr><td><code>await self.animate(message, frames, interval, inline?)</code></td><td>Анимировать сообщение последовательными кадрами</td></tr>
+          <tr><td><code>await self.request_join(peer, reason, assure_joined?)</code></td><td>Запросить вступление пользователя в канал</td></tr>
+          <tr><td><code>await self.import_lib(url, suspend_on_error?)</code></td><td>Загрузить внешнюю библиотеку по URL</td></tr>
+        </tbody>
+      </table></div>
+
+      <h2 id="ch14s3">Library — методы</h2>
+      <p>Внешние библиотеки наследуются от <code>loader.Library</code>. Класс должен заканчиваться на <code>Lib</code>.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Метод</th><th>Описание</th></tr></thead>
+        <tbody>
+          <tr><td><code>self._lib_get(key, default=None)</code></td><td>Читать из БД (ключ = имя класса библиотеки)</td></tr>
+          <tr><td><code>self._lib_set(key, value)</code></td><td>Записать в БД</td></tr>
+          <tr><td><code>self._lib_pointer(key, default=None)</code></td><td>Живой указатель аналогично <code>pointer()</code></td></tr>
+          <tr><td><code>async def init(self)</code></td><td>Вызывается при загрузке библиотеки (переопределяемый)</td></tr>
+        </tbody>
+      </table></div>
+      <pre data-lang="python"><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Пример библиотеки
+# scope: heroku_min 2.0.0
+from .. import loader
+
+class MyToolsLib(loader.Library):
+    developer = "@me"
+    version = (1, 0, 0)
+
+    async def init(self):
+        self._lib_set("loaded", True)
+
+    def do_something(self, text: str) -> str:
+        return text.upper()
+
+# Загрузка в модуле:
+lib = await self.import_lib("https://example.com/mytools.py")
+result = lib.do_something("hello")</code></pre>
+
+      <h2 id="ch14s4">utils.*</h2>
       <div class="table-wrap"><table>
         <thead><tr><th>Функция</th><th>Назначение</th></tr></thead>
         <tbody>
@@ -1330,12 +1597,14 @@ logger.<span class="fn">exception</span>(<span class="st">"Ошибка с trace
           <tr><td><code>get_target(msg, arg_no)</code></td><td>ID целевого пользователя из аргументов</td></tr>
           <tr><td><code>get_link(entity)</code></td><td>Ссылка tg:// на пользователя / канал</td></tr>
           <tr><td><code>escape_html(text)</code></td><td>Экранировать HTML-символы</td></tr>
-          <tr><td><code>chunks(list, n)</code></td><td>Разбить список на чанки по n элементов</td></tr>
+          <tr><td><code>chunks(lst, n)</code></td><td>Разбить список на чанки по n элементов</td></tr>
           <tr><td><code>rand(size)</code></td><td>Случайная строка заданной длины</td></tr>
+          <tr><td><code>run_sync(func, *args)</code></td><td>Запустить синхронную функцию в executor</td></tr>
           <tr><td><code>formatted_uptime()</code></td><td>Uptime в читаемом виде (2д 3ч 14м)</td></tr>
           <tr><td><code>asset_channel(client, id, desc, ...)</code></td><td>Создать или получить служебный канал</td></tr>
           <tr><td><code>get_git_hash()</code></td><td>Текущий git-коммит бота</td></tr>
           <tr><td><code>get_named_platform()</code></td><td>Название платформы (Docker, VDS и т.д.)</td></tr>
+          <tr><td><code>check_url(url)</code></td><td>Проверить валидность URL</td></tr>
         </tbody>
       </table></div>
 
